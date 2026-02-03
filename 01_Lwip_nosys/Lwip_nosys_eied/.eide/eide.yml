@@ -2,7 +2,7 @@ version: "4.1"
 name: YH-F429
 type: ARM
 deviceName: null
-packDir: null
+packDir: .pack/Keil/STM32F4xx_DFP.1.0.8
 srcDirs: []
 virtualFolder:
   name: <virtual_root>
@@ -90,7 +90,6 @@ virtualFolder:
       files:
         - path: ../Lwip_nosys/User/main.c
         - path: ../Lwip_nosys/User/stm32f4xx_it.c
-        - path: ../Lwip_nosys/User/led/bsp_led.c
       folders: []
     - name: DOC
       files:
@@ -99,22 +98,23 @@ virtualFolder:
 dependenceList: []
 outDir: build
 miscInfo:
-  uid: 3bd3e8b1ca4b2286fe584f6da5fd0672
+  uid: ddcb5605222c7de76a20b04291a8b845
 targets:
-  工程模板:
+  build_template:
     cppPreprocessAttrs:
       defineList:
         - USE_HAL_DRIVER
         - STM32F429xx
         - USE_STM32F429I_DISCO
       incList:
+        - .
         - ../Lwip_nosys/Libraries/CMSIS/Include
         - ../Lwip_nosys/Libraries/CMSIS/Device/ST/STM32F4xx/Include
         - ../Lwip_nosys/Libraries/STM32F4xx_HAL_Driver/Inc
         - ../Lwip_nosys/User
         - ../Lwip_nosys/User/led
         - .cmsis/include
-        - ../Lwip_nosys/Project/RTE/_工程模板
+        - ../Lwip_nosys/Project/RTE/_build_template
       libList: []
     excludeList: []
     toolchain: AC5
@@ -230,4 +230,9 @@ targets:
         otherCmds: ""
         proType: 1
         speed: 8000
-    uploader: JLink
+      OpenOCD:
+        baseAddr: "0x08000000"
+        bin: ""
+        interface: stlink
+        target: stm32f4x
+    uploader: OpenOCD

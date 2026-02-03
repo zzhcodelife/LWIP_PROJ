@@ -18,7 +18,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "stm32f4xx.h"
-#include "./led/bsp_led.h"
 
 static void SystemClock_Config(void);
 
@@ -32,48 +31,9 @@ int main(void)
     /* 系统时钟初始化成216 MHz */
     SystemClock_Config();
 
-    /* LED 端口初始化 */
-    LED_GPIO_Config();
-
     /* 控制LED灯 */
     while (1)
     {
-        LED1( ON );			 // 亮 
-        HAL_Delay(1000);
-        LED1( OFF );		  // 灭
-        HAL_Delay(1000);
-
-        LED2( ON );			// 亮 
-        HAL_Delay(1000);
-        LED2( OFF );		  // 灭
-
-        LED3( ON );			 // 亮 
-        HAL_Delay(1000);
-        LED3( OFF );		  // 灭	
-        
-        /*轮流显示 红绿蓝黄紫青白 颜色*/
-        LED_RED;
-        HAL_Delay(1000);
-        
-        LED_GREEN;
-        HAL_Delay(1000);
-        
-        LED_BLUE;
-        HAL_Delay(1000);
-        
-        LED_YELLOW;
-        HAL_Delay(1000);
-        
-        LED_PURPLE;
-        HAL_Delay(1000);
-                
-        LED_CYAN;
-        HAL_Delay(1000);
-        
-        LED_WHITE;
-        HAL_Delay(1000);
-        
-        LED_RGBOFF;
         HAL_Delay(1000);
     }
 }
