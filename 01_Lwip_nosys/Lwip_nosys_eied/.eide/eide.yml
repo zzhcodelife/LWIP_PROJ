@@ -90,11 +90,130 @@ virtualFolder:
       files:
         - path: ../Lwip_nosys/User/main.c
         - path: ../Lwip_nosys/User/stm32f4xx_it.c
+        - path: ../Lwip_nosys/User/eth/bsp_eth.c
+        - path: ../Lwip_nosys/User/eth/bsp_eth.h
       folders: []
     - name: DOC
       files:
         - path: ../Lwip_nosys/Doc/readme.txt
       folders: []
+    - name: LwIP
+      files: []
+      folders:
+        - name: api
+          files:
+            - path: ../Lwip_nosys/LwIP/api/api_lib.c
+            - path: ../Lwip_nosys/LwIP/api/api_msg.c
+            - path: ../Lwip_nosys/LwIP/api/err.c
+            - path: ../Lwip_nosys/LwIP/api/if_api.c
+            - path: ../Lwip_nosys/LwIP/api/netbuf.c
+            - path: ../Lwip_nosys/LwIP/api/netdb.c
+            - path: ../Lwip_nosys/LwIP/api/netifapi.c
+            - path: ../Lwip_nosys/LwIP/api/sockets.c
+            - path: ../Lwip_nosys/LwIP/api/tcpip.c
+          folders: []
+        - name: core
+          files:
+            - path: ../Lwip_nosys/LwIP/core/altcp.c
+            - path: ../Lwip_nosys/LwIP/core/altcp_alloc.c
+            - path: ../Lwip_nosys/LwIP/core/altcp_tcp.c
+            - path: ../Lwip_nosys/LwIP/core/def.c
+            - path: ../Lwip_nosys/LwIP/core/dns.c
+            - path: ../Lwip_nosys/LwIP/core/inet_chksum.c
+            - path: ../Lwip_nosys/LwIP/core/init.c
+            - path: ../Lwip_nosys/LwIP/core/ip.c
+            - path: ../Lwip_nosys/LwIP/core/mem.c
+            - path: ../Lwip_nosys/LwIP/core/memp.c
+            - path: ../Lwip_nosys/LwIP/core/netif.c
+            - path: ../Lwip_nosys/LwIP/core/pbuf.c
+            - path: ../Lwip_nosys/LwIP/core/raw.c
+            - path: ../Lwip_nosys/LwIP/core/stats.c
+            - path: ../Lwip_nosys/LwIP/core/sys.c
+            - path: ../Lwip_nosys/LwIP/core/tcp.c
+            - path: ../Lwip_nosys/LwIP/core/tcp_in.c
+            - path: ../Lwip_nosys/LwIP/core/tcp_out.c
+            - path: ../Lwip_nosys/LwIP/core/timeouts.c
+            - path: ../Lwip_nosys/LwIP/core/udp.c
+          folders:
+            - name: ipv4
+              files:
+                - path: ../Lwip_nosys/LwIP/core/ipv4/acd.c
+                - path: ../Lwip_nosys/LwIP/core/ipv4/autoip.c
+                - path: ../Lwip_nosys/LwIP/core/ipv4/dhcp.c
+                - path: ../Lwip_nosys/LwIP/core/ipv4/etharp.c
+                - path: ../Lwip_nosys/LwIP/core/ipv4/icmp.c
+                - path: ../Lwip_nosys/LwIP/core/ipv4/igmp.c
+                - path: ../Lwip_nosys/LwIP/core/ipv4/ip4.c
+                - path: ../Lwip_nosys/LwIP/core/ipv4/ip4_addr.c
+                - path: ../Lwip_nosys/LwIP/core/ipv4/ip4_frag.c
+              folders: []
+            - name: ipv6
+              files:
+                - path: ../Lwip_nosys/LwIP/core/ipv6/dhcp6.c
+                - path: ../Lwip_nosys/LwIP/core/ipv6/ethip6.c
+                - path: ../Lwip_nosys/LwIP/core/ipv6/icmp6.c
+                - path: ../Lwip_nosys/LwIP/core/ipv6/inet6.c
+                - path: ../Lwip_nosys/LwIP/core/ipv6/ip6.c
+                - path: ../Lwip_nosys/LwIP/core/ipv6/ip6_addr.c
+                - path: ../Lwip_nosys/LwIP/core/ipv6/ip6_frag.c
+                - path: ../Lwip_nosys/LwIP/core/ipv6/mld6.c
+                - path: ../Lwip_nosys/LwIP/core/ipv6/nd6.c
+              folders: []
+        - name: netif
+          files:
+            - path: ../Lwip_nosys/LwIP/netif/bridgeif.c
+            - path: ../Lwip_nosys/LwIP/netif/bridgeif_fdb.c
+            - path: ../Lwip_nosys/LwIP/netif/ethernet.c
+            - path: ../Lwip_nosys/LwIP/netif/lowpan6.c
+            - path: ../Lwip_nosys/LwIP/netif/lowpan6_ble.c
+            - path: ../Lwip_nosys/LwIP/netif/lowpan6_common.c
+            - path: ../Lwip_nosys/LwIP/netif/slipif.c
+            - path: ../Lwip_nosys/LwIP/netif/zepif.c
+          folders:
+            - name: ppp
+              files:
+                - path: ../Lwip_nosys/LwIP/netif/ppp/auth.c
+                - path: ../Lwip_nosys/LwIP/netif/ppp/ccp.c
+                - path: ../Lwip_nosys/LwIP/netif/ppp/chap_ms.c
+                - path: ../Lwip_nosys/LwIP/netif/ppp/chap-md5.c
+                - path: ../Lwip_nosys/LwIP/netif/ppp/chap-new.c
+                - path: ../Lwip_nosys/LwIP/netif/ppp/demand.c
+                - path: ../Lwip_nosys/LwIP/netif/ppp/eap.c
+                - path: ../Lwip_nosys/LwIP/netif/ppp/ecp.c
+                - path: ../Lwip_nosys/LwIP/netif/ppp/eui64.c
+                - path: ../Lwip_nosys/LwIP/netif/ppp/fsm.c
+                - path: ../Lwip_nosys/LwIP/netif/ppp/ipcp.c
+                - path: ../Lwip_nosys/LwIP/netif/ppp/ipv6cp.c
+                - path: ../Lwip_nosys/LwIP/netif/ppp/lcp.c
+                - path: ../Lwip_nosys/LwIP/netif/ppp/magic.c
+                - path: ../Lwip_nosys/LwIP/netif/ppp/mppe.c
+                - path: ../Lwip_nosys/LwIP/netif/ppp/multilink.c
+                - path: ../Lwip_nosys/LwIP/netif/ppp/ppp.c
+                - path: ../Lwip_nosys/LwIP/netif/ppp/pppapi.c
+                - path: ../Lwip_nosys/LwIP/netif/ppp/pppcrypt.c
+                - path: ../Lwip_nosys/LwIP/netif/ppp/pppoe.c
+                - path: ../Lwip_nosys/LwIP/netif/ppp/pppol2tp.c
+                - path: ../Lwip_nosys/LwIP/netif/ppp/pppos.c
+                - path: ../Lwip_nosys/LwIP/netif/ppp/upap.c
+                - path: ../Lwip_nosys/LwIP/netif/ppp/utils.c
+                - path: ../Lwip_nosys/LwIP/netif/ppp/vj.c
+              folders:
+                - name: polarssl
+                  files:
+                    - path: ../Lwip_nosys/LwIP/netif/ppp/polarssl/arc4.c
+                    - path: ../Lwip_nosys/LwIP/netif/ppp/polarssl/des.c
+                    - path: ../Lwip_nosys/LwIP/netif/ppp/polarssl/md4.c
+                    - path: ../Lwip_nosys/LwIP/netif/ppp/polarssl/md5.c
+                    - path: ../Lwip_nosys/LwIP/netif/ppp/polarssl/sha1.c
+                  folders: []
+        - name: arch
+          files:
+            - path: ../Lwip_nosys/User/arch/lwipopts.h
+            - path: ../Lwip_nosys/User/arch/cc.h
+            - path: ../Lwip_nosys/User/arch/perf.h
+            - path: ../Lwip_nosys/User/arch/ethernetif.c
+            - path: ../Lwip_nosys/User/arch/ethernetif.h
+          folders: []
 dependenceList: []
 outDir: build
 miscInfo:
