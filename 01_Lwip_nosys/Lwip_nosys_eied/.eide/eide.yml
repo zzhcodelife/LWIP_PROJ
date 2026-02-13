@@ -167,7 +167,6 @@ virtualFolder:
             - path: ../Lwip_nosys/LwIP/netif/lowpan6.c
             - path: ../Lwip_nosys/LwIP/netif/lowpan6_ble.c
             - path: ../Lwip_nosys/LwIP/netif/lowpan6_common.c
-            - path: ../Lwip_nosys/LwIP/netif/slipif.c
             - path: ../Lwip_nosys/LwIP/netif/zepif.c
           folders:
             - name: ppp
@@ -234,6 +233,8 @@ targets:
         - ../Lwip_nosys/User/led
         - .cmsis/include
         - ../Lwip_nosys/Project/RTE/_build_template
+        - ../Lwip_nosys/LwIP/include
+        - ../Lwip_nosys/User/arch
       libList: []
     excludeList: []
     toolchain: AC5

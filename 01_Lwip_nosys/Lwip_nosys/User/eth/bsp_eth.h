@@ -1,43 +1,44 @@
 #ifndef __BSP_ETH_H__
 #define __BSP_ETH_H__
-#include "stm32f4xx.h"
 
-/* Global Ethernet handle */
-ETH_HandleTypeDef heth;
+#include "stm32f4xx_hal.h"
+#include "debug.h"
 
-#if defined(__ICCARM__) /*!< IAR Compiler */
-#pragma data_alignment = 4
+
+/**ETH GPIO Configuration    
+PC1     ------> ETH_MDC
+PA1     ------> ETH_REF_CLK
+PA2     ------> ETH_MDIO
+PA7     ------> ETH_CRS_DV
+PC4     ------> ETH_RXD0
+PC5     ------> ETH_RXD1
+PB11     ------> ETH_TX_EN
+PG13     ------> ETH_TXD0
+PG14     ------> ETH_TXD1 
+*/
+
+/* Private defines --------------------------------------*/
+#define ETH_MDC_Pin                 GPIO_PIN_1
+#define ETH_MDC_GPIO_Port           GPIOC
+#define ETH_REF_CLK_Pin             GPIO_PIN_1
+#define ETH_REF_CLK_GPIO_Port       GPIOA
+#define ETH_MDIO_Pin                GPIO_PIN_2
+#define ETH_MDIO_GPIO_Port          GPIOA
+#define ETH_CRS_DV_Pin              GPIO_PIN_7
+#define ETH_CRS_DV_GPIO_Port        GPIOA
+#define ETH_RXD0_Pin                GPIO_PIN_4
+#define ETH_RXD0_GPIO_Port          GPIOC
+#define ETH_RXD1_Pin                GPIO_PIN_5
+#define ETH_RXD1_GPIO_Port          GPIOC
+#define ETH_TX_EN_Pin               GPIO_PIN_11
+#define ETH_TX_EN_GPIO_Port         GPIOB
+#define USART1_TX_Pin               GPIO_PIN_9
+#define USART1_TX_GPIO_Port         GPIOA
+#define USART1_TXA10_Pin            GPIO_PIN_10
+#define USART1_TXA10_GPIO_Port      GPIOA
+#define ETH_TXD0_Pin                GPIO_PIN_13
+#define ETH_TXD0_GPIO_Port          GPIOG
+#define ETH_TXD1_Pin                GPIO_PIN_14
+#define ETH_TXD1_GPIO_Port          GPIOG
+HAL_StatusTypeDef Bsp_Eth_Init(void);
 #endif
-__ALIGN_BEGIN ETH_DMADescTypeDef DMARxDscrTab[ETH_RXBUFNB] __ALIGN_END;
-/* Ethernet Rx MA Descriptor */
-
-#if defined(__ICCARM__) /*!< IAR Compiler */
-#pragma data_alignment = 4
-#endif
-__ALIGN_BEGIN ETH_DMADescTypeDef DMATxDscrTab[ETH_TXBUFNB] __ALIGN_END;
-/* Ethernet Tx DMA Descriptor */
-
-#if defined(__ICCARM__) /*!< IAR Compiler */
-#pragma data_alignment = 4
-#endif
-__ALIGN_BEGIN uint8_t Rx_Buff[ETH_RXBUFNB][ETH_RX_BUF_SIZE] __ALIGN_END;
-/* Ethernet Receive Buffer */
-
-#if defined(__ICCARM__) /*!< IAR Compiler */
-#pragma data_alignment = 4
-#endif
-__ALIGN_BEGIN uint8_t Tx_Buff[ETH_TXBUFNB][ETH_TX_BUF_SIZE] __ALIGN_END;
-/* Ethernet Transmit Buffer */
-
-typedef struct
-{
-	ETH_TypeDef *Instance;			  /*!< Register base address */
-	ETH_InitTypeDef Init;			  /*!< Ethernet Init Configuration */
-	uint32_t LinkStatus;			  /*!< Ethernet link status */
-	ETH_DMADescTypeDef *RxDesc;		  /*!< Rx descriptor to Get */
-	ETH_DMADescTypeDef *TxDesc;		  /*!< Tx descriptor to Set */
-	ETH_DMARxFrameInfos RxFrameInfos; /*!< last Rx frame infos */
-	__IO HAL_ETH_StateTypeDef State;  /*!< ETH communication state */
-	HAL_LockTypeDef Lock;			  /*!< ETH Lock */
-} ETH_HandleTypeDef;
-#endif	

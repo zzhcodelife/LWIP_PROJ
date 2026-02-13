@@ -263,7 +263,4 @@ typedef enum
   * @}
   */
   
-
-
-
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
