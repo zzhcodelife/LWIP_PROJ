@@ -1,114 +1,107 @@
 /**
-  ******************************************************************************
+  *********************************************************************
   * @file    main.c
   * @author  fire
   * @version V1.0
-  * @date    2017-xx-xx
-  * @brief   GPIO输出--使用固件库点亮LED灯
-  ******************************************************************************
+  * @date    2019-xx-xx
+  * @brief   FreeRTOS V9.0.0 + STM32 LwIP
+  *********************************************************************
   * @attention
   *
-  * 实验平台:野火  STM32 F429 开发板 
+  * 实验平台:野火  STM32全系列开发板 
   * 论坛    :http://www.firebbs.cn
-  * 淘宝    :http://fire-stm32.taobao.com
+  * 淘宝    :https://fire-stm32.taobao.com
   *
-  ******************************************************************************
-  */
+  **********************************************************************
+  */ 
+ 
+ /*
+ *************************************************************************
+ *                             包含的头文件
+ *************************************************************************
+ */ 
 
-/* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "stm32f4xx.h"
+#include <lwip/opt.h>
+#include <lwip/arch.h>
+#include "lwip/init.h"
+#include "lwip/netif.h"
+#include "ethernetif.h"
+#include "netif/ethernet.h"
+#include "lwip/def.h"
+#include "lwip/stats.h"
+#include "lwip/etharp.h"
+#include "lwip/ip.h"
+#include "lwip/snmp.h"
+#include "lwip/timeouts.h"
+struct netif gnetif;
+ip4_addr_t ipaddr;
+ip4_addr_t netmask;
+ip4_addr_t gw;
+uint8_t IP_ADDRESS[4];
+uint8_t NETMASK_ADDRESS[4];
+uint8_t GATEWAY_ADDRESS[4];
+int flag = 0;
 
-static void SystemClock_Config(void);
+void LwIP_Init(void)
+{
+  /* IP addresses initialization */
+  /* USER CODE BEGIN 0 */
+#ifdef USE_DHCP
+  ip_addr_set_zero_ip4(&ipaddr);
+  ip_addr_set_zero_ip4(&netmask);
+  ip_addr_set_zero_ip4(&gw);
+#else
+  IP4_ADDR(&ipaddr,IP_ADDR0,IP_ADDR1,IP_ADDR2,IP_ADDR3);
+  IP4_ADDR(&netmask,NETMASK_ADDR0,NETMASK_ADDR1,NETMASK_ADDR2,NETMASK_ADDR3);
+  IP4_ADDR(&gw,GW_ADDR0,GW_ADDR1,GW_ADDR2,GW_ADDR3);
+#endif /* USE_DHCP */
+  /* USER CODE END 0 */
 
-/**
-  * @brief  主函数
-  * @param  无
-  * @retval 无
-  */
+  /* Initilialize the LwIP stack without RTOS */
+  lwip_init();
+  
+  /* add the network interface (IPv4/IPv6) without RTOS */
+  netif_add(&gnetif, &ipaddr, &netmask, &gw, NULL, &ethernetif_init, &ethernet_input);
+
+  /* Registers the default network interface */
+  netif_set_default(&gnetif);
+
+  if (netif_is_link_up(&gnetif))
+  {
+    /* When the netif is fully configured this function must be called */
+    netif_set_up(&gnetif);
+  }
+  else
+  {
+    /* When the netif link is down this function must be called */
+    netif_set_down(&gnetif);
+  }
+
+/* USER CODE BEGIN 3 */
+
+/* USER CODE END 3 */
+}
+
+
 int main(void)
 {
-    /* 系统时钟初始化成216 MHz */
-    SystemClock_Config();
-
-    /* 控制LED灯 */
-    while (1)
+  //板级外设初始化
+  BSP_Init();
+  
+  //LwIP协议栈初始化
+  LwIP_Init();  
+  
+  while (1)
+  {
+    if(flag)
     {
-        HAL_Delay(1000);
+      flag = 0;
+      //调用网卡接收函数
+      ethernetif_input(&gnetif);
     }
-}
-
-/**
-  * @brief  系统时钟配置 
-  *            System Clock source            = PLL (HSE)
-  *            SYSCLK(Hz)                     = 180000000
-  *            HCLK(Hz)                       = 180000000
-  *            AHB Prescaler                  = 1
-  *            APB1 Prescaler                 = 4
-  *            APB2 Prescaler                 = 2
-  *            HSE Frequency(Hz)              = 12000000
-  *            PLL_M                          = 25
-  *            PLL_N                          = 360
-  *            PLL_P                          = 2
-  *            PLL_Q                          = 4
-  *            VDD(V)                         = 3.3
-  *            Main regulator output voltage  = Scale1 mode
-  *            Flash Latency(WS)              = 5
-  * @param  无
-  * @retval 无
-  */
-static void SystemClock_Config(void)
-{
-  RCC_ClkInitTypeDef RCC_ClkInitStruct;
-  RCC_OscInitTypeDef RCC_OscInitStruct;
-  HAL_StatusTypeDef ret = HAL_OK;
-  
-   /* 使能HSE，配置HSE为PLL的时钟源，配置PLL的各种分频因子M N P Q 
-	  * PLLCLK = HSE/M*N/P = 12M / 25 *360 / 2 = 180M
-	  */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
-  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-  RCC_OscInitStruct.PLL.PLLM = 25;
-  RCC_OscInitStruct.PLL.PLLN = 360;
-  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-  RCC_OscInitStruct.PLL.PLLQ = 4;
-  ret = HAL_RCC_OscConfig(&RCC_OscInitStruct);
-  
-  if( ret != HAL_OK)
-  {
-    while(1) {}
-  }
-
-  /* 激活 OverDrive 模式以达到180M频率 */
-  ret =HAL_PWREx_EnableOverDrive();
-   if( ret != HAL_OK)
-  {
-    while(1) {}
-  }
- 
-  /* 选择PLLCLK作为SYSCLK，并配置 HCLK, PCLK1 and PCLK2 的时钟分频因子 
-	 * SYSCLK = PLLCLK     = 216M
-	 * HCLK   = SYSCLK / 1 = 216M
-	 * PCLK2  = SYSCLK / 2 = 108M
-	 * PCLK1  = SYSCLK / 4 = 54M
-	 */
-  RCC_ClkInitStruct.ClockType = (RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2);
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;  
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
-  
-  ret =HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_5);
-  
-   if( ret != HAL_OK)
-  {
-    while(1) {}
+    //处理LwIP中定时事件
+    sys_check_timeouts();
   }
 }
-
-
-
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
+/********************************END OF FILE****************************/

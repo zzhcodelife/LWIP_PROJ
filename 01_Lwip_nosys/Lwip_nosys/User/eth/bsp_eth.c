@@ -187,10 +187,10 @@ HAL_StatusTypeDef Bsp_Eth_Init(void)
   
 	/* configure ethernet peripheral (GPIOs, clocks, MAC, DMA) */
   ret = HAL_ETH_Init(&heth);
-	if (ret == HAL_OK)
-		PRINT_DEBUG("eth hardware init sucess...\n");
-  else
-    PRINT_DEBUG("eth hardware init faild...\n");
+	// if (ret == HAL_OK)
+	// 	PRINT_DEBUG("eth hardware init sucess...\n");
+  // else
+  //   PRINT_DEBUG("eth hardware init faild...\n");
     
   /* Initialize Tx Descriptors list: Chain Mode */
   HAL_ETH_DMATxDescListInit(&heth, DMATxDscrTab, &Tx_Buff[0][0], ETH_TXBUFNB);
@@ -228,5 +228,5 @@ void HAL_ETH_TxCpltCallback(ETH_HandleTypeDef *heth)
 
 void HAL_ETH_ErrorCallback(ETH_HandleTypeDef *heth)
 {
-    PRINT_ERR("eth err\n");
+   // PRINT_ERR("eth err\n");
 }

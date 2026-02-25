@@ -14,17 +14,14 @@
 #define IFNAME0 's'
 #define IFNAME1 't'
 
-
 struct ethernetif {
 	struct eth_addr *ethaddr;
 /* Add whatever per-interface state that is needed here. */
 };
 
-
 extern ETH_HandleTypeDef heth;
 
 static void arp_timer(void *arg);
-
 
 static void low_level_init(struct netif *netif)
 { 
@@ -65,7 +62,6 @@ static void low_level_init(struct netif *netif)
 
   HAL_ETH_Start(&heth);
 }
-
 
 static err_t low_level_output(struct netif *netif, struct pbuf *p)
 {
@@ -147,7 +143,6 @@ error:
   return errval;
 }
 
-
 static struct pbuf * low_level_input(struct netif *netif)
 {
   struct pbuf *p = NULL;
@@ -171,7 +166,7 @@ static struct pbuf * low_level_input(struct netif *netif)
   len = heth.RxFrameInfos.length;
   buffer = (uint8_t *)heth.RxFrameInfos.buffer;
   
-  PRINT_INFO("receive frame %d len buffer : %s\n", len, buffer);
+  //PRINT_INFO("receive frame %d len buffer : %s\n", len, buffer);
   if (len > 0)
   {
     /* We allocate a pbuf chain of pbufs from the Lwip buffer pool */
@@ -234,7 +229,6 @@ static struct pbuf * low_level_input(struct netif *netif)
   return p;
 }
 
-
 void ethernetif_input(struct netif *netif)
 {
   err_t err;
@@ -279,7 +273,7 @@ err_t ethernetif_init(struct netif *netif)
 	ethernetif = mem_malloc(sizeof(struct ethernetif));
 
 	if (ethernetif == NULL) {
-		PRINT_ERR("ethernetif_init: out of memory\n");
+		//PRINT_ERR("ethernetif_init: out of memory\n");
 		return ERR_MEM;
 	}
   

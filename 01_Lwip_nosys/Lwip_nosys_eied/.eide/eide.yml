@@ -92,6 +92,7 @@ virtualFolder:
         - path: ../Lwip_nosys/User/stm32f4xx_it.c
         - path: ../Lwip_nosys/User/eth/bsp_eth.c
         - path: ../Lwip_nosys/User/eth/bsp_eth.h
+        - path: ../Lwip_nosys/User/board.c
       folders: []
     - name: DOC
       files:
@@ -230,7 +231,6 @@ targets:
         - ../Lwip_nosys/Libraries/CMSIS/Device/ST/STM32F4xx/Include
         - ../Lwip_nosys/Libraries/STM32F4xx_HAL_Driver/Inc
         - ../Lwip_nosys/User
-        - ../Lwip_nosys/User/led
         - .cmsis/include
         - ../Lwip_nosys/Project/RTE/_build_template
         - ../Lwip_nosys/LwIP/include
@@ -264,7 +264,7 @@ targets:
             output-format: elf
             ro-base: "0x08000000"
             rw-base: "0x20000000"
-            xo-base: ""
+            xo-base: "0x08000000"
         scatterFilePath: ""
         storageLayout:
           RAM:

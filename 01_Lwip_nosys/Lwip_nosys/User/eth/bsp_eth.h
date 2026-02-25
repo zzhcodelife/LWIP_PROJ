@@ -2,7 +2,6 @@
 #define __BSP_ETH_H__
 
 #include "stm32f4xx_hal.h"
-#include "debug.h"
 
 
 /**ETH GPIO Configuration    

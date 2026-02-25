@@ -53,7 +53,6 @@
 
 #include "lwip/err.h"
 #include "lwip/netif.h"
-#include "debug.h"
 /* Within 'USER CODE' section, code will be kept by default at each generation */
 /* USER CODE BEGIN 0 */
 #define NETIF_MTU								      ( 1500 )

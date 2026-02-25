@@ -90,8 +90,7 @@ order. Define to 0 if your device is low on memory. */
 #define TCP_MSS (1500 - 40) 
 /* TCP sender buffer space (bytes). */
 #define TCP_SND_BUF (4*TCP_MSS) 
-/* TCP_SND_QUEUELEN: TCP sender buffer space (pbufs). This must be at␣
-,→least
+/* TCP_SND_QUEUELEN: TCP sender buffer space (pbufs). This must be at least
 as much as (2 * TCP_SND_BUF/TCP_MSS) for things to work. */
 #define TCP_SND_QUEUELEN (2* TCP_SND_BUF/TCP_MSS)
 /* TCP receive window. */
@@ -119,8 +118,7 @@ turning this on does currently not work. */
 ---------- Checksum options ----------
 --------------------------------------
 */
-/*The STM32F4x7 allows comput
-ing and verifying the IP, UDP, TCP and ICMP checksums by hardware:
+/*The STM32F4x7 allows computing and verifying the IP, UDP, TCP and ICMP checksums by hardware:
 - To use this feature let the following define uncommented.
 - To disable it and process by CPU comment the the checksum.
 */
