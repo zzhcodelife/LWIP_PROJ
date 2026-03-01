@@ -89,10 +89,10 @@ virtualFolder:
     - name: USER
       files:
         - path: ../Lwip_nosys/User/main.c
-        - path: ../Lwip_nosys/User/stm32f4xx_it.c
         - path: ../Lwip_nosys/User/eth/bsp_eth.c
         - path: ../Lwip_nosys/User/eth/bsp_eth.h
         - path: ../Lwip_nosys/User/board.c
+        - path: ../Lwip_nosys/User/stm32f4xx_it.c
       folders: []
     - name: DOC
       files:
@@ -214,6 +214,23 @@ virtualFolder:
             - path: ../Lwip_nosys/User/arch/ethernetif.c
             - path: ../Lwip_nosys/User/arch/ethernetif.h
           folders: []
+    - name: FREERTOS
+      files: []
+      folders:
+        - name: FreeRTOS_CORE
+          files:
+            - path: ../Lwip_nosys/FreeRTOS/croutine.c
+            - path: ../Lwip_nosys/FreeRTOS/event_groups.c
+            - path: ../Lwip_nosys/FreeRTOS/list.c
+            - path: ../Lwip_nosys/FreeRTOS/queue.c
+            - path: ../Lwip_nosys/FreeRTOS/tasks.c
+            - path: ../Lwip_nosys/FreeRTOS/timers.c
+          folders: []
+        - name: FreeRTOS_PORTABLE
+          files:
+            - path: ../Lwip_nosys/FreeRTOS/portable/MemMang/heap_4.c
+            - path: ../Lwip_nosys/FreeRTOS/portable/RVDS/ARM_CM4F/port.c
+          folders: []
 dependenceList: []
 outDir: build
 miscInfo:
@@ -235,6 +252,8 @@ targets:
         - ../Lwip_nosys/Project/RTE/_build_template
         - ../Lwip_nosys/LwIP/include
         - ../Lwip_nosys/User/arch
+        - ../Lwip_nosys/FreeRTOS/include
+        - ../Lwip_nosys/FreeRTOS/portable/RVDS/ARM_CM4F
       libList: []
     excludeList: []
     toolchain: AC5

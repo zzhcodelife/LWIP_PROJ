@@ -74,6 +74,7 @@
 #define GW_ADDR3                      1
 /* USER CODE END 0 */
 
+extern int flag;
 void BSP_Init(void);
-
+  
 #endif /* __MAIN_H */

@@ -1,25 +1,25 @@
 /**
-  *********************************************************************
-  * @file    main.c
-  * @author  fire
-  * @version V1.0
-  * @date    2019-xx-xx
-  * @brief   FreeRTOS V9.0.0 + STM32 LwIP
-  *********************************************************************
-  * @attention
-  *
-  * 实验平台:野火  STM32全系列开发板 
-  * 论坛    :http://www.firebbs.cn
-  * 淘宝    :https://fire-stm32.taobao.com
-  *
-  **********************************************************************
-  */ 
- 
- /*
- *************************************************************************
- *                             包含的头文件
- *************************************************************************
- */ 
+ *********************************************************************
+ * @file    main.c
+ * @author  fire
+ * @version V1.0
+ * @date    2019-xx-xx
+ * @brief   FreeRTOS V9.0.0 + STM32 LwIP
+ *********************************************************************
+ * @attention
+ *
+ * 实验平台:野火  STM32全系列开发板
+ * 论坛    :http://www.firebbs.cn
+ * 淘宝    :https://fire-stm32.taobao.com
+ *
+ **********************************************************************
+ */
+
+/*
+*************************************************************************
+*                             包含的头文件
+*************************************************************************
+*/
 
 #include "main.h"
 #include <lwip/opt.h>
@@ -52,15 +52,15 @@ void LwIP_Init(void)
   ip_addr_set_zero_ip4(&netmask);
   ip_addr_set_zero_ip4(&gw);
 #else
-  IP4_ADDR(&ipaddr,IP_ADDR0,IP_ADDR1,IP_ADDR2,IP_ADDR3);
-  IP4_ADDR(&netmask,NETMASK_ADDR0,NETMASK_ADDR1,NETMASK_ADDR2,NETMASK_ADDR3);
-  IP4_ADDR(&gw,GW_ADDR0,GW_ADDR1,GW_ADDR2,GW_ADDR3);
+  IP4_ADDR(&ipaddr, IP_ADDR0, IP_ADDR1, IP_ADDR2, IP_ADDR3);
+  IP4_ADDR(&netmask, NETMASK_ADDR0, NETMASK_ADDR1, NETMASK_ADDR2, NETMASK_ADDR3);
+  IP4_ADDR(&gw, GW_ADDR0, GW_ADDR1, GW_ADDR2, GW_ADDR3);
 #endif /* USE_DHCP */
   /* USER CODE END 0 */
 
   /* Initilialize the LwIP stack without RTOS */
   lwip_init();
-  
+
   /* add the network interface (IPv4/IPv6) without RTOS */
   netif_add(&gnetif, &ipaddr, &netmask, &gw, NULL, &ethernetif_init, &ethernet_input);
 
@@ -78,29 +78,28 @@ void LwIP_Init(void)
     netif_set_down(&gnetif);
   }
 
-/* USER CODE BEGIN 3 */
+  /* USER CODE BEGIN 3 */
 
-/* USER CODE END 3 */
+  /* USER CODE END 3 */
 }
-
 
 int main(void)
 {
-  //板级外设初始化
+  // 板级外设初始化
   BSP_Init();
-  
-  //LwIP协议栈初始化
-  LwIP_Init();  
-  
+
+  // LwIP协议栈初始化
+  LwIP_Init();
+
   while (1)
   {
-    if(flag)
+    if (flag)
     {
       flag = 0;
-      //调用网卡接收函数
+      // 调用网卡接收函数
       ethernetif_input(&gnetif);
     }
-    //处理LwIP中定时事件
+    // 处理 LwIP 中定时事件
     sys_check_timeouts();
   }
 }
