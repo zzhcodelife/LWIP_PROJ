@@ -213,7 +213,6 @@ extern void LWIP_Process(void);
 
 void HAL_ETH_RxCpltCallback(ETH_HandleTypeDef *heth)
 {
-  flag = 1;
 }
 
 void HAL_ETH_TxCpltCallback(ETH_HandleTypeDef *heth)

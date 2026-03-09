@@ -213,6 +213,8 @@ virtualFolder:
             - path: ../Lwip_nosys/User/arch/perf.h
             - path: ../Lwip_nosys/User/arch/ethernetif.c
             - path: ../Lwip_nosys/User/arch/ethernetif.h
+            - path: ../Lwip_nosys/User/arch/sys_arch.c
+            - path: ../Lwip_nosys/User/arch/sys_arch.h
           folders: []
     - name: FREERTOS
       files: []
@@ -243,17 +245,16 @@ targets:
         - STM32F429xx
         - USE_STM32F429I_DISCO
       incList:
-        - .
         - ../Lwip_nosys/Libraries/CMSIS/Include
         - ../Lwip_nosys/Libraries/CMSIS/Device/ST/STM32F4xx/Include
         - ../Lwip_nosys/Libraries/STM32F4xx_HAL_Driver/Inc
         - ../Lwip_nosys/User
         - .cmsis/include
         - ../Lwip_nosys/Project/RTE/_build_template
-        - ../Lwip_nosys/LwIP/include
         - ../Lwip_nosys/User/arch
         - ../Lwip_nosys/FreeRTOS/include
         - ../Lwip_nosys/FreeRTOS/portable/RVDS/ARM_CM4F
+        - ../Lwip_nosys/LwIP/include
       libList: []
     excludeList: []
     toolchain: AC5

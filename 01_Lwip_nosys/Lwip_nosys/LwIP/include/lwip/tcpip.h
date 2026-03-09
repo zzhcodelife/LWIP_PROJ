@@ -45,6 +45,7 @@
 #include "lwip/timeouts.h"
 #include "lwip/netif.h"
 
+#include "sys_arch.h"
 #ifdef __cplusplus
 extern "C" {
 #endif

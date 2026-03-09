@@ -33,16 +33,18 @@
 #define LWIP_LWIPOPTS_H
 
 /**
-* SYS_LIGHTWEIGHT_PROT==1: if you want inter-task protection for certain
-* critical regions during buffer allocation, deallocation and memory
-* allocation and deallocation.
-*/
-#define SYS_LIGHTWEIGHT_PROT 0
+ * SYS_LIGHTWEIGHT_PROT==1: if you want inter-task protection for certain
+ * critical regions during buffer allocation, deallocation and memory
+ * allocation and deallocation.
+ */
+#define SYS_LIGHTWEIGHT_PROT    1
+
 /**
-* NO_SYS==1: Provides VERY minimal functionality. Otherwise,
-* use lwIP facilities.
-*/
-#define NO_SYS 1 
+ * NO_SYS==1: Provides VERY minimal functionality. Otherwise,
+ * use lwIP facilities.
+ */
+#define NO_SYS                  0
+
 /**
 * NO_SYS_NO_TIMERS==1: Drop support for sys_timeout when NO_SYS==1
 * Mainly for compatibility to old versions.
@@ -99,9 +101,11 @@ as much as (2 * TCP_SND_BUF/TCP_MSS) for things to work. */
 #define LWIP_ICMP 1
 /* ---------- DHCP options ---------- */
 /* Define LWIP_DHCP to 1 if you want DHCP configuration of
-interfaces. DHCP is not implemented in lwIP 0.5.1, however, so
-turning this on does currently not work. */
-#define LWIP_DHCP 1
+   interfaces. DHCP is not implemented in lwIP 0.5.1, however, so
+   turning this on does currently not work. */
+#define LWIP_DHCP               0
+
+
 /* ---------- UDP options ---------- */
 #define LWIP_UDP 1
 #define UDP_TTL 255
@@ -160,18 +164,37 @@ turning this on does currently not work. */
 ----------------------------------------------
 */
 /**
-* LWIP_NETCONN==1: Enable Netconn API (require to use api_lib.c)
-*/
-#define LWIP_NETCONN 0 
+ * LWIP_NETCONN==1: Enable Netconn API (require to use api_lib.c)
+ */
+#define LWIP_NETCONN                    1
+
 /*
 ------------------------------------
 ---------- Socket options ----------
 ------------------------------------
 */
 /**
-* LWIP_SOCKET==1: Enable Socket API (require to use sockets.c)
+ * LWIP_SOCKET==1: Enable Socket API (require to use sockets.c)
+ */
+#define LWIP_SOCKET                     1
+
+/*
+   ---------------------------------
+   ---------- OS options ----------
+   ---------------------------------
 */
-#define LWIP_SOCKET 0 
+
+
+#define DEFAULT_UDP_RECVMBOX_SIZE       10
+#define DEFAULT_TCP_RECVMBOX_SIZE       10
+#define DEFAULT_ACCEPTMBOX_SIZE         10
+#define DEFAULT_THREAD_STACKSIZE        1024
+
+
+#define TCPIP_THREAD_NAME              "lwip"
+#define TCPIP_THREAD_STACKSIZE          2048
+#define TCPIP_MBOX_SIZE                 8
+#define TCPIP_THREAD_PRIO               3
 /*
 ----------------------------------------
 ---------- Lwip Debug options ----------
