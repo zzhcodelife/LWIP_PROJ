@@ -39,8 +39,8 @@
 #include "cc.h"
 #include "stm32f4xx_it.h"
 
-#include "FreeRTOS.h"						  
-#include "task.h" 
+#include "FreeRTOS.h"
+#include "task.h"
 
 /** @addtogroup STM32F4xx_HAL_Examples
  * @{
@@ -130,8 +130,6 @@ void UsageFault_Handler(void)
 void DebugMon_Handler(void)
 {
 }
-
-
 
 /**
  * @brief  This function handles SysTick Handler.

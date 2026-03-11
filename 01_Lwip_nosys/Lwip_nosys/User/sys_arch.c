@@ -29,12 +29,11 @@
  * Author: Simon Goldschmidt
  *
  */
-#include "debug.h"
 
 #include <lwip/opt.h>
 #include <lwip/arch.h>
 
-#include "tcpip.h"
+#include "lwip/tcpip.h"
 #include "lwip/init.h"
 #include "lwip/netif.h"
 #include "lwip/sio.h"
@@ -499,12 +498,4 @@ void TCPIP_Init(void)
         (((gnetif.ip_addr.addr)&0x00ff0000)>>16), \
         ((gnetif.ip_addr.addr)&0xff000000)>>24);
 }
-
-
-
-
-
-
-
-
 

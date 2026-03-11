@@ -490,11 +490,11 @@ void TCPIP_Init(void)
     vTaskDelay(1);
   } 
 #endif
-  printf("本地IP地址是:%d.%d.%d.%d\n\n",  \
-        ((gnetif.ip_addr.addr)&0x000000ff),       \
-        (((gnetif.ip_addr.addr)&0x0000ff00)>>8),  \
-        (((gnetif.ip_addr.addr)&0x00ff0000)>>16), \
-        ((gnetif.ip_addr.addr)&0xff000000)>>24);
+  // printf("本地IP地址是:%d.%d.%d.%d\n\n",  \
+  //       ((gnetif.ip_addr.addr)&0x000000ff),       \
+  //       (((gnetif.ip_addr.addr)&0x0000ff00)>>8),  \
+  //       (((gnetif.ip_addr.addr)&0x00ff0000)>>16), \
+  //       ((gnetif.ip_addr.addr)&0xff000000)>>24);
 }
 
 

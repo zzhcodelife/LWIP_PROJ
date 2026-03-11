@@ -21,6 +21,10 @@ struct ethernetif {
 
 extern ETH_HandleTypeDef heth;
 
+xSemaphoreHandle s_xSemaphore = NULL;
+sys_sem_t tx_sem = NULL;
+sys_mbox_t eth_tx_mb = NULL;
+
 static void arp_timer(void *arg);
 
 static void low_level_init(struct netif *netif)
@@ -52,19 +56,57 @@ static void low_level_init(struct netif *netif)
   /* maximum transfer unit */
   netif->mtu = NETIF_MTU;
   
+  /* Accept broadcast address and ARP traffic */
+  /* don't set NETIF_FLAG_ETHARP if this device is not an ethernet one */
   #if LWIP_ARP
     netif->flags |= NETIF_FLAG_BROADCAST | NETIF_FLAG_ETHARP;
   #else 
     netif->flags |= NETIF_FLAG_BROADCAST;
   #endif /* LWIP_ARP */
 
-#endif /* LWIP_ARP || LWIP_ETHERNET */
+/* USER CODE BEGIN PHY_PRE_CONFIG */ 
+    
+  s_xSemaphore = xSemaphoreCreateCounting(40,0);
+  
+  if(sys_sem_new(&tx_sem , 0) == ERR_OK)
+   // PRINT_DEBUG("sys_sem_new ok\n");
+  
+  if(sys_mbox_new(&eth_tx_mb , 50) == ERR_OK)
+    // PRINT_DEBUG("sys_mbox_new ok\n");
 
+  /* create the task that handles the ETH_MAC */
+	sys_thread_new("ETHIN",
+                  ethernetif_input,  
+                  netif,        	  
+                  NETIF_IN_TASK_STACK_SIZE,
+                  NETIF_IN_TASK_PRIORITY); 
+                                 
+/* USER CODE END PHY_PRE_CONFIG */
+  
+
+#endif /* LWIP_ARP || LWIP_ETHERNET */
+  
+  /* USER CODE BEGIN ETH_MspInit 1 */
+  /* Enable the Ethernet global Interrupt */
+  HAL_NVIC_SetPriority(ETH_IRQn, 6, 0);
+  HAL_NVIC_EnableIRQ(ETH_IRQn);
+  
+  /* Enable ETHERNET clock  */
+  __HAL_RCC_ETH_CLK_ENABLE();
+  /* USER CODE END ETH_MspInit 1 */
+  
+  /* Enable MAC and DMA transmission and reception */
   HAL_ETH_Start(&heth);
 }
 
 static err_t low_level_output(struct netif *netif, struct pbuf *p)
 {
+	static sys_sem_t ousem = NULL;
+	if(ousem == NULL)
+  {
+    sys_sem_new(&ousem,0);
+    sys_sem_signal(&ousem);
+  }
   err_t errval;
   struct pbuf *q;
 
@@ -82,7 +124,7 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
     errval = ERR_USE;
     goto error;
   }
-
+  sys_sem_wait(&ousem);
   
   /* copy frame from pbufs to driver buffers */
   for(q = p; q != NULL; q = q->next)
@@ -139,6 +181,8 @@ error:
     /* Resume DMA transmission*/
     heth.Instance->DMATPDR = 0;
   }
+  
+  sys_sem_signal(&ousem);
   
   return errval;
 }
@@ -229,26 +273,44 @@ static struct pbuf * low_level_input(struct netif *netif)
   return p;
 }
 
-void ethernetif_input(struct netif *netif)
-{
-  err_t err;
-  struct pbuf *p;
-
-  /* move received packet into a new pbuf */
-  p = low_level_input(netif);
-    
-  /* no packet could be read, silently ignore this */
-  if (p == NULL) return;
-    
-  /* entry point to the LwIP stack */
-  err = netif->input(p, netif);
-    
-  if (err != ERR_OK)
+/**
+ * This function should be called when a packet is ready to be read
+ * from the interface. It uses the function low_level_input() that
+ * should handle the actual reception of bytes from the network
+ * interface. Then the type of the received packet is determined and
+ * the appropriate input function is called.
+ *
+ * @param netif the lwip network interface structure for this ethernetif
+ */
+void ethernetif_input(void *pParams) {
+	struct netif *netif;
+	struct pbuf *p = NULL;
+	netif = (struct netif*) pParams;
+  LWIP_DEBUGF(NETIF_DEBUG, ("ethernetif_input: IP input error\n"));
+  
+	while(1) 
   {
-    LWIP_DEBUGF(NETIF_DEBUG, ("ethernetif_input: IP input error\n"));
-    pbuf_free(p);
-    p = NULL;    
-  }
+    if(xSemaphoreTake( s_xSemaphore, portMAX_DELAY ) == pdTRUE)
+    {
+      /* move received packet into a new pbuf */
+      taskENTER_CRITICAL();
+      p = low_level_input(netif);
+      taskEXIT_CRITICAL();
+      /* points to packet payload, which starts with an Ethernet header */
+      if(p != NULL)
+      {
+        taskENTER_CRITICAL();
+        /* full packet send to tcpip_thread to process */
+        if (netif->input(p, netif) != ERR_OK)
+        {
+          LWIP_DEBUGF(NETIF_DEBUG, ("ethernetif_input: IP input error\n"));
+          pbuf_free(p);
+          p = NULL;
+        }
+        taskEXIT_CRITICAL();
+      }
+    }
+	}
 }
 
 
@@ -402,4 +464,25 @@ void ethernetif_update_config(struct netif *netif)
 
   ethernetif_notify_conn_changed(netif);
 }
-#endif
+
+/* USER CODE BEGIN 8 */
+/**
+  * @brief  This function notify user about link status changement.
+  * @param  netif: the network interface
+  * @retval None
+  */
+__weak void ethernetif_notify_conn_changed(struct netif *netif)
+{
+  /* NOTE : This is function could be implemented in user file 
+            when the callback is needed,
+  */
+
+}
+/* USER CODE END 8 */ 
+#endif /* LWIP_NETIF_LINK_CALLBACK */
+
+/* USER CODE BEGIN 9 */
+
+/* USER CODE END 9 */
+/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
+
