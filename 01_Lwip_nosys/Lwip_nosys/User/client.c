@@ -29,13 +29,13 @@ static void client(void *thread_param)
         //printf("Connect to iperf server successful!\n");
         while (1)
         {
-            ret = netconn_write(conn,send_buf,sizeof(send_buf),0); (5)
+            ret = netconn_write(conn,send_buf,sizeof(send_buf),0); 
             vTaskDelay(1000);
         }
     }
 }
 void
-    client_init(void)
+client_init(void)
 {
     sys_thread_new("client", client, NULL, 512, 4);
 }

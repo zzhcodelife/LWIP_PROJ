@@ -93,6 +93,7 @@ virtualFolder:
         - path: ../Lwip_nosys/User/eth/bsp_eth.h
         - path: ../Lwip_nosys/User/board.c
         - path: ../Lwip_nosys/User/stm32f4xx_it.c
+        - path: ../Lwip_nosys/User/client.c
       folders: []
     - name: DOC
       files:

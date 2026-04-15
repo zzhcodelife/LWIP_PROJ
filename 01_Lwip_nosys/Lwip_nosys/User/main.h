@@ -44,6 +44,7 @@
 #include "task.h"
 #include "queue.h"
 #include "semphr.h"
+#include "client.h"
 
 void BSP_Init(void);
 
