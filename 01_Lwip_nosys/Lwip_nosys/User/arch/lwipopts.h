@@ -176,7 +176,7 @@ as much as (2 * TCP_SND_BUF/TCP_MSS) for things to work. */
 /**
  * LWIP_SOCKET==1: Enable Socket API (require to use sockets.c)
  */
-#define LWIP_SOCKET                     1
+#define LWIP_SOCKET                     0
 
 /*
    ---------------------------------
