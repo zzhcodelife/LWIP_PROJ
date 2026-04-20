@@ -46,7 +46,9 @@
 #include "semphr.h"
 //#include "client.h"
 //#include "tcpecho.h"
-#include "udpecho.h"
+//#include "udpecho.h"
+//#include "socketclient.h"
+#include "socketserver.h"
 void BSP_Init(void);
 
 /* Exported types ------------------------------------------------------------*/

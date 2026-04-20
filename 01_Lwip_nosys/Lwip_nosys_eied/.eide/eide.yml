@@ -96,6 +96,8 @@ virtualFolder:
         - path: ../Lwip_nosys/User/client.c
         - path: ../Lwip_nosys/User/tcpecho.c
         - path: ../Lwip_nosys/User/udpecho.c
+        - path: ../Lwip_nosys/User/socketclient.c
+        - path: ../Lwip_nosys/User/socketserver.c
       folders: []
     - name: DOC
       files:
