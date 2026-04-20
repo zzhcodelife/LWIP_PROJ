@@ -45,8 +45,8 @@
 #include "queue.h"
 #include "semphr.h"
 //#include "client.h"
-#include "tcpecho.h"
-
+//#include "tcpecho.h"
+#include "udpecho.h"
 void BSP_Init(void);
 
 /* Exported types ------------------------------------------------------------*/

@@ -119,7 +119,8 @@ static void AppTaskCreate(void)
   BaseType_t xReturn = pdPASS;/* 定义一个创建信息返回值，默认为pdPASS */
   TCPIP_Init();
   //client_init();
-  tcpecho_init();
+  //tcpecho_init();
+  udpecho_init();
   taskENTER_CRITICAL();           //进入临界区
 
   /* 创建Test1_Task任务 */
