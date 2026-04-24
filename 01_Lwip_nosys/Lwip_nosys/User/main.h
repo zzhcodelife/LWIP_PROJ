@@ -48,7 +48,8 @@
 //#include "tcpecho.h"
 //#include "udpecho.h"
 //#include "socketclient.h"
-#include "socketserver.h"
+//#include "socketserver.h"
+#include "socketudp.h"
 void BSP_Init(void);
 
 /* Exported types ------------------------------------------------------------*/
