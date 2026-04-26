@@ -123,7 +123,8 @@ static void AppTaskCreate(void)
   //udpecho_init();
   //socket_client_init();
   //socketserver_init();
-  socketudp_init();
+  //socketudp_init();
+  TCP_Client_Raw_Init();
   taskENTER_CRITICAL();           //进入临界区
 
   /* 创建Test1_Task任务 */

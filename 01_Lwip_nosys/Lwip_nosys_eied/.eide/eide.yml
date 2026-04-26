@@ -99,6 +99,7 @@ virtualFolder:
         - path: ../Lwip_nosys/User/socketclient.c
         - path: ../Lwip_nosys/User/socketserver.c
         - path: ../Lwip_nosys/User/socketudp.c
+        - path: ../Lwip_nosys/User/tcp_client_raw.c
       folders: []
     - name: DOC
       files:
