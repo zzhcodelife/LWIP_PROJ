@@ -35,6 +35,7 @@
 #include "lwip/snmp.h"
 #include "lwip/timeouts.h"
 #include "tcp_server_raw.h"
+#include "udp_demo.h"
 struct netif gnetif;
 ip4_addr_t ipaddr;
 ip4_addr_t netmask;
@@ -92,7 +93,8 @@ int main(void)
   // LwIP协议栈初始化
   LwIP_Init();
   //TCP_Client_Raw_Init();
-  TCP_Echo_Init();
+  //TCP_Echo_Init();
+  UDP_Echo_Init();
   while (1)
   {
     if (flag)

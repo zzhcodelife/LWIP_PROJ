@@ -101,6 +101,7 @@ virtualFolder:
         - path: ../Lwip_nosys/User/socketudp.c
         - path: ../Lwip_nosys/User/tcp_client_raw.c
         - path: ../Lwip_nosys/User/tcp_server_raw.c
+        - path: ../Lwip_nosys/User/udp_demo.c
       folders: []
     - name: DOC
       files:
