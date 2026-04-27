@@ -51,8 +51,8 @@
 //#include "socketserver.h"
 //#include "socketudp.h"
 //#include "tcp_client_raw.h"
-#include "iperf_socket_test.h"
-
+//#include "iperf_socket_test.h"
+#include "iperf_client_socket.h"
 void BSP_Init(void);
 
 /* Exported types ------------------------------------------------------------*/

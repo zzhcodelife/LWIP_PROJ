@@ -243,6 +243,8 @@ virtualFolder:
         - path: ../Lwip_nosys/User/udp_demo.c
         - path: ../Lwip_nosys/User/iperf_test.c
         - path: ../Lwip_nosys/User/iperf_socket_test.c
+        - path: ../Lwip_nosys/User/iperf_client.c
+        - path: ../Lwip_nosys/User/iperf_client_socket.c
       folders: []
 dependenceList: []
 outDir: build
