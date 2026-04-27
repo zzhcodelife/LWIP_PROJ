@@ -125,7 +125,8 @@ static void AppTaskCreate(void)
   //socketserver_init();
   //socketudp_init();
   //TCP_Client_Raw_Init();
-  iperf_server_init();
+  //iperf_server_init();
+  iperf_server_socket_init();
   taskENTER_CRITICAL();           //进入临界区
 
   /* 创建Test1_Task任务 */

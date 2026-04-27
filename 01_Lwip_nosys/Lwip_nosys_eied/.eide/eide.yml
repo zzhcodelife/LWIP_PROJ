@@ -86,24 +86,6 @@ virtualFolder:
         - path: ../Lwip_nosys/Libraries/STM32F4xx_HAL_Driver/Src/stm32f4xx_ll_sdmmc.c
         - path: ../Lwip_nosys/Libraries/STM32F4xx_HAL_Driver/Src/stm32f4xx_ll_usb.c
       folders: []
-    - name: USER
-      files:
-        - path: ../Lwip_nosys/User/main.c
-        - path: ../Lwip_nosys/User/eth/bsp_eth.c
-        - path: ../Lwip_nosys/User/eth/bsp_eth.h
-        - path: ../Lwip_nosys/User/board.c
-        - path: ../Lwip_nosys/User/stm32f4xx_it.c
-        - path: ../Lwip_nosys/User/client.c
-        - path: ../Lwip_nosys/User/tcpecho.c
-        - path: ../Lwip_nosys/User/udpecho.c
-        - path: ../Lwip_nosys/User/socketclient.c
-        - path: ../Lwip_nosys/User/socketserver.c
-        - path: ../Lwip_nosys/User/socketudp.c
-        - path: ../Lwip_nosys/User/tcp_client_raw.c
-        - path: ../Lwip_nosys/User/tcp_server_raw.c
-        - path: ../Lwip_nosys/User/udp_demo.c
-        - path: ../Lwip_nosys/User/iperf_test.c
-      folders: []
     - name: DOC
       files:
         - path: ../Lwip_nosys/Doc/readme.txt
@@ -243,6 +225,25 @@ virtualFolder:
             - path: ../Lwip_nosys/FreeRTOS/portable/MemMang/heap_4.c
             - path: ../Lwip_nosys/FreeRTOS/portable/RVDS/ARM_CM4F/port.c
           folders: []
+    - name: USER
+      files:
+        - path: ../Lwip_nosys/User/main.c
+        - path: ../Lwip_nosys/User/eth/bsp_eth.c
+        - path: ../Lwip_nosys/User/eth/bsp_eth.h
+        - path: ../Lwip_nosys/User/board.c
+        - path: ../Lwip_nosys/User/stm32f4xx_it.c
+        - path: ../Lwip_nosys/User/client.c
+        - path: ../Lwip_nosys/User/tcpecho.c
+        - path: ../Lwip_nosys/User/udpecho.c
+        - path: ../Lwip_nosys/User/socketclient.c
+        - path: ../Lwip_nosys/User/socketserver.c
+        - path: ../Lwip_nosys/User/socketudp.c
+        - path: ../Lwip_nosys/User/tcp_client_raw.c
+        - path: ../Lwip_nosys/User/tcp_server_raw.c
+        - path: ../Lwip_nosys/User/udp_demo.c
+        - path: ../Lwip_nosys/User/iperf_test.c
+        - path: ../Lwip_nosys/User/iperf_socket_test.c
+      folders: []
 dependenceList: []
 outDir: build
 miscInfo:
