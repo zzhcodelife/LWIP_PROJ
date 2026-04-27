@@ -93,6 +93,13 @@ virtualFolder:
         - path: ../Lwip_nosys/User/eth/bsp_eth.h
         - path: ../Lwip_nosys/User/board.c
         - path: ../Lwip_nosys/User/stm32f4xx_it.c
+        - path: ../Lwip_nosys/User/client.c
+        - path: ../Lwip_nosys/User/tcpecho.c
+        - path: ../Lwip_nosys/User/udpecho.c
+        - path: ../Lwip_nosys/User/socketclient.c
+        - path: ../Lwip_nosys/User/socketserver.c
+        - path: ../Lwip_nosys/User/socketudp.c
+        - path: ../Lwip_nosys/User/tcp_client_raw.c
       folders: []
     - name: DOC
       files:
@@ -213,6 +220,8 @@ virtualFolder:
             - path: ../Lwip_nosys/User/arch/perf.h
             - path: ../Lwip_nosys/User/arch/ethernetif.c
             - path: ../Lwip_nosys/User/arch/ethernetif.h
+            - path: ../Lwip_nosys/User/arch/sys_arch.c
+            - path: ../Lwip_nosys/User/arch/sys_arch.h
           folders: []
     - name: FREERTOS
       files: []
@@ -250,12 +259,14 @@ targets:
         - ../Lwip_nosys/User
         - .cmsis/include
         - ../Lwip_nosys/Project/RTE/_build_template
-        - ../Lwip_nosys/LwIP/include
         - ../Lwip_nosys/User/arch
         - ../Lwip_nosys/FreeRTOS/include
         - ../Lwip_nosys/FreeRTOS/portable/RVDS/ARM_CM4F
+        - ../Lwip_nosys/LwIP/include
       libList: []
     excludeList: []
+    settings:
+      debugger: cortex-debug
     toolchain: AC5
     toolchainConfigMap:
       AC5:
