@@ -100,6 +100,9 @@ virtualFolder:
         - path: ../Lwip_nosys/User/socketserver.c
         - path: ../Lwip_nosys/User/socketudp.c
         - path: ../Lwip_nosys/User/tcp_client_raw.c
+        - path: ../Lwip_nosys/User/tcp_server_raw.c
+        - path: ../Lwip_nosys/User/udp_demo.c
+        - path: ../Lwip_nosys/User/iperf_test.c
       folders: []
     - name: DOC
       files:
