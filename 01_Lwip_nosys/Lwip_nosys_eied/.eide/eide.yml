@@ -246,6 +246,7 @@ virtualFolder:
         - path: ../Lwip_nosys/User/iperf_client.c
         - path: ../Lwip_nosys/User/iperf_client_socket.c
         - path: ../Lwip_nosys/User/http_netconn_server.c
+        - path: ../Lwip_nosys/User/http_netconn_server_led.c
       folders: []
 dependenceList: []
 outDir: build
