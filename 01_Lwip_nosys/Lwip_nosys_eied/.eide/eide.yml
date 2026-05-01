@@ -3,8 +3,7 @@ name: YH-F429
 type: ARM
 deviceName: null
 packDir: .pack/Keil/STM32F4xx_DFP.1.0.8
-srcDirs:
-  - ../Lwip_nosys/User/mqtt
+srcDirs: []
 virtualFolder:
   name: <virtual_root>
   files: []
@@ -248,6 +247,28 @@ virtualFolder:
         - path: ../Lwip_nosys/User/iperf_client_socket.c
         - path: ../Lwip_nosys/User/http_netconn_server.c
         - path: ../Lwip_nosys/User/http_netconn_server_led.c
+      folders: []
+    - name: Mqtt
+      files:
+        - path: ../Lwip_nosys/User/mqtt/MQTTConnect.h
+        - path: ../Lwip_nosys/User/mqtt/MQTTConnectClient.c
+        - path: ../Lwip_nosys/User/mqtt/MQTTConnectServer.c
+        - path: ../Lwip_nosys/User/mqtt/MQTTDeserializePublish.c
+        - path: ../Lwip_nosys/User/mqtt/MQTTFormat.c
+        - path: ../Lwip_nosys/User/mqtt/MQTTFormat.h
+        - path: ../Lwip_nosys/User/mqtt/MQTTPacket.c
+        - path: ../Lwip_nosys/User/mqtt/MQTTPacket.h
+        - path: ../Lwip_nosys/User/mqtt/MQTTPublish.h
+        - path: ../Lwip_nosys/User/mqtt/MQTTSerializePublish.c
+        - path: ../Lwip_nosys/User/mqtt/MQTTSubscribe.h
+        - path: ../Lwip_nosys/User/mqtt/MQTTSubscribeClient.c
+        - path: ../Lwip_nosys/User/mqtt/MQTTSubscribeServer.c
+        - path: ../Lwip_nosys/User/mqtt/MQTTUnsubscribe.h
+        - path: ../Lwip_nosys/User/mqtt/MQTTUnsubscribeClient.c
+        - path: ../Lwip_nosys/User/mqtt/MQTTUnsubscribeServer.c
+        - path: ../Lwip_nosys/User/mqtt/StackTrace.h
+        - path: ../Lwip_nosys/User/mqtt/transport.c
+        - path: ../Lwip_nosys/User/mqtt/transport.h
       folders: []
 dependenceList: []
 outDir: build

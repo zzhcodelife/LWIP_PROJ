@@ -15,191 +15,93 @@
  *    Sergio R. Caprile - "commonalization" from prior samples and/or documentation extension
  *******************************************************************************/
 
-#include <sys/types.h>
+#include "transport.h"
+#include "lwip/opt.h"
+#include "lwip/arch.h"
+#include "lwip/api.h"
+#include "lwip/inet.h"
+#include "lwip/sockets.h"
+#include "string.h"
 
-#if !defined(SOCKET_ERROR)
-	/** error in socket operation */
-	#define SOCKET_ERROR -1
-#endif
-
-#if defined(WIN32)
-/* default on Windows is 64 - increase to make Linux and Windows the same */
-#define FD_SETSIZE 1024
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#define MAXHOSTNAMELEN 256
-#define EAGAIN WSAEWOULDBLOCK
-#define EINTR WSAEINTR
-#define EINVAL WSAEINVAL
-#define EINPROGRESS WSAEINPROGRESS
-#define EWOULDBLOCK WSAEWOULDBLOCK
-#define ENOTCONN WSAENOTCONN
-#define ECONNRESET WSAECONNRESET
-#define ioctl ioctlsocket
-#define socklen_t int
-#else
-#define INVALID_SOCKET SOCKET_ERROR
-#include <sys/socket.h>
-#include <sys/param.h>
-#include <sys/time.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <string.h>
-#include <stdlib.h>
-#endif
-
-#if defined(WIN32)
-#include <Iphlpapi.h>
-#else
-#include <sys/ioctl.h>
-#include <net/if.h>
-#endif
-
-/**
-This simple low-level implementation assumes a single connection for a single thread. Thus, a static
-variable is used for that connection.
-On other scenarios, the user must solve this by taking into account that the current implementation of
-MQTTPacket_read() has a function pointer for a function call to get the data to a buffer, but no provisions
-to know the caller or other indicator (the socket id): int (*getfn)(unsigned char*, int)
-*/
-static int mysock = INVALID_SOCKET;
-
-
-int transport_sendPacketBuffer(int sock, unsigned char* buf, int buflen)
+static int32_t mysock;
+/************************************************************************
+** 函数名称: transport_sendPacketBuffer
+** 函数功能: 以 TCP 方式发送数据
+** 入口参数: unsigned char* buf：数据缓冲区
+** int32_t buflen：数据长度
+** 出口参数: <0 发送数据失败
+************************************************************************/
+int32_t transport_sendPacketBuffer(uint8_t *buf, int32_t buflen)
 {
-	int rc = 0;
-	rc = write(sock, buf, buflen);
+	int32_t rc;
+	rc = write(mysock, buf, buflen);
+	return rc;
+}
+/************************************************************************
+** 函数名称: transport_getdata
+** 函数功能: 接收 TCP 数据
+** 入口参数: unsigned char* buf：数据缓冲区
+** int32_t count：数据长度
+** 出口参数: <=0 接收数据失败
+************************************************************************/
+int32_t transport_getdata(uint8_t *buf, int32_t count)
+{
+	int32_t rc;
+	rc = recv(mysock, buf, count, 0);
 	return rc;
 }
 
-
-int transport_getdata(unsigned char* buf, int count)
+/************************************************************************
+** 函数名称: transport_open
+** 函数功能: 打开一个接口，并且和服务器 建立连接
+** 入口参数: char* servip: 服务器域名
+** int32_t port: 端口号
+** 出口参数: <0 打开连接失败
+************************************************************************/
+int32_t transport_open(int8_t *servip, int32_t port)
 {
-	int rc = recv(mysock, buf, count, 0);
-	//printf("received %d bytes count %d\n", rc, (int)count);
-	return rc;
-}
-
-int transport_getdatanb(void *sck, unsigned char* buf, int count)
-{
-	int sock = *((int *)sck); 	/* sck: pointer to whatever the system may use to identify the transport */
-	/* this call will return after the timeout set on initialization if no bytes;
-	   in your system you will use whatever you use to get whichever outstanding
-	   bytes your socket equivalent has ready to be extracted right now, if any,
-	   or return immediately */
-	int rc = recv(sock, buf, count, 0);	
-	if (rc == -1) {
-		/* check error conditions from your system here, and return -1 */
-		return 0;
-	}
-	return rc;
-}
-
-/**
-return >=0 for a socket descriptor, <0 for an error code
-@todo Basically moved from the sample without changes, should accomodate same usage for 'sock' for clarity,
-removing indirections
-*/
-int transport_open(char* addr, int port)
-{
-int* sock = &mysock;
-	int type = SOCK_STREAM;
-	struct sockaddr_in address;
-#if defined(AF_INET6)
-	struct sockaddr_in6 address6;
-#endif
-	int rc = -1;
-#if defined(WIN32)
-	short family;
-#else
-	sa_family_t family = AF_INET;
-#endif
-	struct addrinfo *result = NULL;
-	struct addrinfo hints = {0, AF_UNSPEC, SOCK_STREAM, IPPROTO_TCP, 0, NULL, NULL, NULL};
-	static struct timeval tv;
-
-	*sock = -1;
-	if (addr[0] == '[')
-	  ++addr;
-
-	if ((rc = getaddrinfo(addr, NULL, &hints, &result)) == 0)
+	int32_t *sock = &mysock;
+	int32_t ret;
+	// int32_t opt;
+	struct sockaddr_in addr;
+	// 初始化服务器信息
+	memset(&addr, 0, sizeof(addr));
+	addr.sin_len = sizeof(addr);
+	addr.sin_family = AF_INET;
+	// 填写服务器端口号
+	addr.sin_port = PP_HTONS(port);
+	// 填写服务器 IP 地址
+	addr.sin_addr.s_addr = inet_addr((const char *)servip);
+	// 创建 SOCK
+	*sock = socket(AF_INET, SOCK_STREAM, 0);
+	// 连接服务器
+	ret = connect(*sock, (struct sockaddr *)&addr, sizeof(addr));
+	if (ret != 0)
 	{
-		struct addrinfo* res = result;
-
-		/* prefer ip4 addresses */
-		while (res)
-		{
-			if (res->ai_family == AF_INET)
-			{
-				result = res;
-				break;
-			}
-			res = res->ai_next;
-		}
-
-#if defined(AF_INET6)
-		if (result->ai_family == AF_INET6)
-		{
-			address6.sin6_port = htons(port);
-			address6.sin6_family = family = AF_INET6;
-			address6.sin6_addr = ((struct sockaddr_in6*)(result->ai_addr))->sin6_addr;
-		}
-		else
-#endif
-		if (result->ai_family == AF_INET)
-		{
-			address.sin_port = htons(port);
-			address.sin_family = family = AF_INET;
-			address.sin_addr = ((struct sockaddr_in*)(result->ai_addr))->sin_addr;
-		}
-		else
-			rc = -1;
-
-		freeaddrinfo(result);
+		// 关闭链接
+		close(*sock);
+		// 连接失败
+		return -1;
 	}
-
-	if (rc == 0)
-	{
-		*sock =	socket(family, type, 0);
-		if (*sock != -1)
-		{
-#if defined(NOSIGPIPE)
-			int opt = 1;
-
-			if (setsockopt(*sock, SOL_SOCKET, SO_NOSIGPIPE, (void*)&opt, sizeof(opt)) != 0)
-				Log(TRACE_MIN, -1, "Could not set SO_NOSIGPIPE for socket %d", *sock);
-#endif
-
-			if (family == AF_INET)
-				rc = connect(*sock, (struct sockaddr*)&address, sizeof(address));
-	#if defined(AF_INET6)
-			else
-				rc = connect(*sock, (struct sockaddr*)&address6, sizeof(address6));
-	#endif
-		}
-	}
-	if (mysock == INVALID_SOCKET)
-		return rc;
-
-	tv.tv_sec = 1;  /* 1 second Timeout */
-	tv.tv_usec = 0;  
-	setsockopt(mysock, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv,sizeof(struct timeval));
-	return mysock;
+	// 连接成功, 设置超时时间 1000ms
+	//  opt = 1000;
+	//  setsockopt(*sock,SOL_SOCKET,SO_RCVTIMEO,&opt,sizeof(int32_t));
+	// 返回套接字
+	return *sock;
 }
-
-int transport_close(int sock)
+/************************************************************************
+** 函数名称: transport_close
+** 函数功能: 关闭套接字
+** 入口参数: unsigned char* buf：数据缓冲区
+** int32_t buflen：数据长度
+** 出口参数: <0 发送数据失败
+************************************************************************/
+int32_t transport_close(void)
 {
-int rc;
-
-	rc = shutdown(sock, SHUT_WR);
-	rc = recv(sock, NULL, (size_t)0, 0);    
-	rc = close(sock);
-
+	int32_t rc;
+	// rc = close(mysock);
+	rc = shutdown(mysock, SHUT_WR);
+	rc = recv(mysock, NULL, (size_t)0, 0);
+	rc = close(mysock);
 	return rc;
 }
