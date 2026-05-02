@@ -64,6 +64,7 @@ int32_t transport_open(int8_t *servip, int32_t port)
 	int32_t ret;
 	// int32_t opt;
 	struct sockaddr_in addr;
+	
 	// 初始化服务器信息
 	memset(&addr, 0, sizeof(addr));
 	addr.sin_len = sizeof(addr);
