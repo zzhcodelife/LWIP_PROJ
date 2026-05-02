@@ -1,3 +1,4 @@
+#include "mqtt_client.h"
 void mqtt_recv_thread(void *pvParameters)
 {
     uint32_t curtick;
@@ -49,11 +50,11 @@ MQTT_START:
             if (MQTT_PingReq(MQTT_Socket) < 0)
             {
                 // 重连服务器
-                PRINT_DEBUG("发送保持活性 ping 失败....\n");
+                //PRINT_DEBUG("发送保持活性 ping 失败....\n");
                 goto CLOSE;
             }
             // 心跳成功
-            PRINT_DEBUG("发送保持活性 ping 作为心跳成功....\n");
+            //PRINT_DEBUG("发送保持活性 ping 作为心跳成功....\n");
             // 表明有数据交换
             no_mqtt_msg_exchange = 0;
         }
@@ -89,7 +90,7 @@ MQTT_SEND_START:
         {
             a = recv_data->temperature;
             b = recv_data->humidity;
-            printf("a = %f,b = %f\n", a, b);
+            //printf("a = %f,b = %f\n", a, b);
             // 更新数据
             res = cJSON_Update(cJSON_Data, TEMP_NUM, &a);
             res = cJSON_Update(cJSON_Data, HUM_NUM, &b);
@@ -125,11 +126,11 @@ MQTT_SEND_START:
             if (MQTT_PingReq(MQTT_Socket) < 0)
             {
                 // 重连服务器
-                PRINT_DEBUG("发送保持活性 ping 失败....\n");
+               // PRINT_DEBUG("发送保持活性 ping 失败....\n");
                 goto MQTT_SEND_CLOSE;
             }
             // 心跳成功
-            PRINT_DEBUG("发送保持活性 ping 作为心跳成功....\n");
+           // PRINT_DEBUG("发送保持活性 ping 作为心跳成功....\n");
             // 表明有数据交换
             no_mqtt_msg_exchange = 0;
         }

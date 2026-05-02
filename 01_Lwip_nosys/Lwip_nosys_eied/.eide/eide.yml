@@ -270,6 +270,13 @@ virtualFolder:
         - path: ../Lwip_nosys/User/mqtt/transport.c
         - path: ../Lwip_nosys/User/mqtt/transport.h
       folders: []
+    - name: CJOSN
+      files:
+        - path: ../Lwip_nosys/CJSON/cJSON.c
+        - path: ../Lwip_nosys/CJSON/cJSON.h
+        - path: ../Lwip_nosys/CJSON/cJSON_Utils.c
+        - path: ../Lwip_nosys/CJSON/cJSON_Utils.h
+      folders: []
 dependenceList: []
 outDir: build
 miscInfo:
