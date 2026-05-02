@@ -1,65 +1,90 @@
 #include "cJSON_Process.h"
-cJSON *cJSON_Data_Init(void)
+#include "main.h"
+
+/*******************************************************************
+ *                          ±äÁ¿ÉùÃ÷                               
+ *******************************************************************/
+
+
+
+cJSON* cJSON_Data_Init(void)
 {
-    cJSON *cJSON_Root = NULL;          // json æ ¹èŠ‚ç‚¹
-    cJSON_Root = cJSON_CreateObject(); /* åˆ›å»ºé¡¹ç›® */
-    if (NULL == cJSON_Root)
-    {
-        return NULL;
-    } /* æ·»åŠ å…ƒç´  é”®å€¼å¯¹ */
-    cJSON_AddStringToObject(cJSON_Root, NAME, DEFAULT_NAME);
-    cJSON_AddNumberToObject(cJSON_Root, TEMP_NUM, DEFAULT_TEMP_NUM);
-    cJSON_AddNumberToObject(cJSON_Root, HUM_NUM, DEFAULT_HUM_NUM);
-    char *p = cJSON_Print(cJSON_Root); /*p æŒ‡å‘çš„å­—ç¬¦ä¸²æ˜¯ json æ ¼å¼çš„ */
-    // PRINT_DEBUG("%s\n",p);
-    vPortFree(p);
-    p = NULL;
-    return cJSON_Root;
+  cJSON* cJSON_Root = NULL;    //json¸ù½Úµã
+  
+  cJSON_Root = cJSON_CreateObject();   /*´´½¨ÏîÄ¿*/
+  if(NULL == cJSON_Root)
+  {
+      return NULL;
+  }
+  cJSON_AddStringToObject(cJSON_Root, NAME, DEFAULT_NAME);  /*Ìí¼ÓÔªËØ  ¼üÖµ¶Ô*/
+  cJSON_AddNumberToObject(cJSON_Root, POWER_STM32, DEFAULT_POWER);
+  cJSON_AddNumberToObject(cJSON_Root, TEMP_STM32, DEFAULT_TEMP);
+  
+  char* p = cJSON_Print(cJSON_Root);  /*p Ö¸ÏòµÄ×Ö·û´®ÊÇjson¸ñÊ½µÄ*/
+  
+//  PRINT_DEBUG("%s\n",p);
+  
+  vPortFree(p);
+  p = NULL;
+  
+  return cJSON_Root;
+  
+}
+uint8_t cJSON_Update(const cJSON * const object,const char * const string,void *d)
+{
+  cJSON* node = NULL;    //json¸ù½Úµã
+  node = cJSON_GetObjectItem(object,string);
+  if(node == NULL)
+    return NULL;
+  if(cJSON_IsBool(node))
+  {
+    int *b = (int*)d;
+//    printf ("d = %d",*b);
+    cJSON_GetObjectItem(object,string)->type = *b ? cJSON_True : cJSON_False;
+//    char* p = cJSON_Print(object);    /*p Ö¸ÏòµÄ×Ö·û´®ÊÇjson¸ñÊ½µÄ*/
+    return 1;
+  }
+  else if(cJSON_IsString(node))
+  {
+    cJSON_GetObjectItem(object,string)->valuestring = (char*)d;
+//    char* p = cJSON_Print(object);    /*p Ö¸ÏòµÄ×Ö·û´®ÊÇjson¸ñÊ½µÄ*/
+    return 1;
+  }
+  else if(cJSON_IsNumber(node))
+  {
+    double *num = (double*)d;
+//    printf ("num = %f",*num);
+//    cJSON_GetObjectItem(object,string)->valueint = (double)*num;
+    cJSON_GetObjectItem(object,string)->valuedouble = (double)*num;
+//    char* p = cJSON_Print(object);    /*p Ö¸ÏòµÄ×Ö·û´®ÊÇjson¸ñÊ½µÄ*/
+    return 1;
+  }
+  else
+    return 1;
 }
 
-uint8_t cJSON_Update(const cJSON *const object, const char *const string,void *d)
+void Proscess(void* data)
 {
-    cJSON *node = NULL; // json æ ¹èŠ‚ç‚¹
-    node = cJSON_GetObjectItem(object, string);
-    if (node == NULL)
-        return NULL;
-    if (cJSON_IsBool(node))
-    {
-        int *b = (int *)d;
-        // printf ("d = %d",*b);
-        cJSON_GetObjectItem(object, string)->type = *b ? cJSON_True : cJSON_,â†’False;
-        // char* p = cJSON_Print(object); /*p æŒ‡å‘çš„å­—ç¬¦ä¸²æ˜¯ json æ ¼å¼çš„ */
-        return 1;
-    }
-    else if (cJSON_IsString(node))
-    {
-        cJSON_GetObjectItem(object, string)->valuestring = (char *)d;
-        // char* p = cJSON_Print(object); /*p æŒ‡å‘çš„å­—ç¬¦ä¸²æ˜¯ json æ ¼å¼çš„ */
-        return 1;
-    }
-    else if (cJSON_IsNumber(node))
-    {
-        double *num = (double *)d;
-        // printf ("num = %f",*num);
-        // cJSON_GetObjectItem(object,string)->valueint = (double)*num;
-        cJSON_GetObjectItem(object, string)->valuedouble = (double)*num;
-        // char* p = cJSON_Print(object); /*p æŒ‡å‘çš„å­—ç¬¦ä¸²æ˜¯ json æ ¼å¼çš„ */
-        return 1;
-    }
-    else
-        return 1;
+  //PRINT_DEBUG("¿ªÊ¼½âÎöJSONÊý¾Ý");
+  cJSON *root,*json_name,*json_power,*json_temp;
+  root = cJSON_Parse((char*)data); //½âÎö³ÉjsonÐÎÊ½
+  
+  json_name = cJSON_GetObjectItem( root , NAME);  //»ñÈ¡¼üÖµÄÚÈÝ
+  json_power = cJSON_GetObjectItem( root , POWER_STM32 );
+  json_temp = cJSON_GetObjectItem( root , TEMP_STM32 );
+
+  // PRINT_DEBUG("name:%s\n temp_num:%f\n hum_num:%f\n",
+  //             json_name->valuestring,
+  //             json_power->valuedouble,
+  //             json_temp->valuedouble);
+
+  cJSON_Delete(root);  //ÊÍ·ÅÄÚ´æ 
 }
-void Proscess(void *data)
-{
-    PRINT_DEBUG("å¼€å§‹è§£æž JSON æ•°æ®");
-    cJSON *root, *json_name, *json_temp_num, *json_hum_num;
-    root = cJSON_Parse((char *)data);            // è§£æžæˆ json å½¢å¼
-    json_name = cJSON_GetObjectItem(root, NAME); // èŽ·å–é”®å€¼å†…å®¹
-    json_temp_num = cJSON_GetObjectItem(root, TEMP_NUM);
-    json_hum_num = cJSON_GetObjectItem(root, HUM_NUM);
-    PRINT_DEBUG("name:%s\n temp_num:%f\n hum_num:%f\n",
-                json_name->valuestring,
-                json_temp_num->valuedouble,
-                json_hum_num->valuedouble);
-    cJSON_Delete(root); // é‡Šæ”¾å†…å­˜
-}
+
+
+
+
+
+
+
+

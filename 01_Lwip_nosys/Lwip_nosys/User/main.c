@@ -130,7 +130,9 @@ static void AppTaskCreate(void)
   //iperf_client_init();
   //iperf_client_socket_init();
   //http_server_netconn_init();
-  httpserver_init();
+  //httpserver_init();
+  mqtt_thread_init();
+
   taskENTER_CRITICAL();           //进入临界区
 
   /* 创建Test1_Task任务 */

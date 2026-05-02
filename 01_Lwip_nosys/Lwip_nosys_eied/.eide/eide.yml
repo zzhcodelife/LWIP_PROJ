@@ -239,41 +239,43 @@ virtualFolder:
         - path: ../Lwip_nosys/User/socketserver.c
         - path: ../Lwip_nosys/User/socketudp.c
         - path: ../Lwip_nosys/User/tcp_client_raw.c
-        - path: ../Lwip_nosys/User/tcp_server_raw.c
-        - path: ../Lwip_nosys/User/udp_demo.c
         - path: ../Lwip_nosys/User/iperf_test.c
         - path: ../Lwip_nosys/User/iperf_socket_test.c
         - path: ../Lwip_nosys/User/iperf_client.c
         - path: ../Lwip_nosys/User/iperf_client_socket.c
         - path: ../Lwip_nosys/User/http_netconn_server.c
         - path: ../Lwip_nosys/User/http_netconn_server_led.c
+        - path: ../Lwip_nosys/User/mqttclient.c
+        - path: ../Lwip_nosys/User/mqttclient.h
       folders: []
     - name: Mqtt
       files:
-        - path: ../Lwip_nosys/User/mqtt/MQTTConnect.h
-        - path: ../Lwip_nosys/User/mqtt/MQTTConnectClient.c
-        - path: ../Lwip_nosys/User/mqtt/MQTTConnectServer.c
-        - path: ../Lwip_nosys/User/mqtt/MQTTDeserializePublish.c
-        - path: ../Lwip_nosys/User/mqtt/MQTTFormat.c
-        - path: ../Lwip_nosys/User/mqtt/MQTTFormat.h
-        - path: ../Lwip_nosys/User/mqtt/MQTTPacket.c
-        - path: ../Lwip_nosys/User/mqtt/MQTTPacket.h
-        - path: ../Lwip_nosys/User/mqtt/MQTTPublish.h
-        - path: ../Lwip_nosys/User/mqtt/MQTTSerializePublish.c
-        - path: ../Lwip_nosys/User/mqtt/MQTTSubscribe.h
-        - path: ../Lwip_nosys/User/mqtt/MQTTSubscribeClient.c
-        - path: ../Lwip_nosys/User/mqtt/MQTTSubscribeServer.c
-        - path: ../Lwip_nosys/User/mqtt/MQTTUnsubscribe.h
-        - path: ../Lwip_nosys/User/mqtt/MQTTUnsubscribeClient.c
-        - path: ../Lwip_nosys/User/mqtt/MQTTUnsubscribeServer.c
-        - path: ../Lwip_nosys/User/mqtt/StackTrace.h
-        - path: ../Lwip_nosys/User/mqtt/transport.c
-        - path: ../Lwip_nosys/User/mqtt/transport.h
+        - path: ../Lwip_nosys/Mqtt/MQTTConnect.h
+        - path: ../Lwip_nosys/Mqtt/MQTTConnectClient.c
+        - path: ../Lwip_nosys/Mqtt/MQTTConnectServer.c
+        - path: ../Lwip_nosys/Mqtt/MQTTDeserializePublish.c
+        - path: ../Lwip_nosys/Mqtt/MQTTFormat.c
+        - path: ../Lwip_nosys/Mqtt/MQTTFormat.h
+        - path: ../Lwip_nosys/Mqtt/MQTTPacket.c
+        - path: ../Lwip_nosys/Mqtt/MQTTPacket.h
+        - path: ../Lwip_nosys/Mqtt/MQTTPublish.h
+        - path: ../Lwip_nosys/Mqtt/MQTTSerializePublish.c
+        - path: ../Lwip_nosys/Mqtt/MQTTSubscribe.h
+        - path: ../Lwip_nosys/Mqtt/MQTTSubscribeClient.c
+        - path: ../Lwip_nosys/Mqtt/MQTTSubscribeServer.c
+        - path: ../Lwip_nosys/Mqtt/MQTTUnsubscribe.h
+        - path: ../Lwip_nosys/Mqtt/MQTTUnsubscribeClient.c
+        - path: ../Lwip_nosys/Mqtt/MQTTUnsubscribeServer.c
+        - path: ../Lwip_nosys/Mqtt/StackTrace.h
+        - path: ../Lwip_nosys/Mqtt/transport.c
+        - path: ../Lwip_nosys/Mqtt/transport.h
       folders: []
     - name: CJOSN
       files:
         - path: ../Lwip_nosys/CJSON/cJSON.c
         - path: ../Lwip_nosys/CJSON/cJSON.h
+        - path: ../Lwip_nosys/CJSON/cJSON_Process.c
+        - path: ../Lwip_nosys/CJSON/cJSON_Process.h
         - path: ../Lwip_nosys/CJSON/cJSON_Utils.c
         - path: ../Lwip_nosys/CJSON/cJSON_Utils.h
       folders: []
@@ -300,6 +302,8 @@ targets:
         - ../Lwip_nosys/FreeRTOS/include
         - ../Lwip_nosys/FreeRTOS/portable/RVDS/ARM_CM4F
         - ../Lwip_nosys/LwIP/include
+        - ../Lwip_nosys/CJSON
+        - ../Lwip_nosys/Mqtt
       libList: []
     excludeList: []
     settings:
