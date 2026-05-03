@@ -61,34 +61,51 @@ int32_t transport_getdata(uint8_t *buf, int32_t count)
 int32_t transport_open(int8_t *servip, int32_t port)
 {
 	int32_t *sock = &mysock;
-	int32_t ret;
-	// int32_t opt;
-	struct sockaddr_in addr;
-	
-	// 初始化服务器信息
-	memset(&addr, 0, sizeof(addr));
-	addr.sin_len = sizeof(addr);
-	addr.sin_family = AF_INET;
-	// 填写服务器端口号
-	addr.sin_port = PP_HTONS(port);
-	// 填写服务器 IP 地址
-	addr.sin_addr.s_addr = inet_addr((const char *)servip);
-	// 创建 SOCK
-	*sock = socket(AF_INET, SOCK_STREAM, 0);
-	// 连接服务器
-	ret = connect(*sock, (struct sockaddr *)&addr, sizeof(addr));
-	if (ret != 0)
-	{
-		// 关闭链接
-		close(*sock);
-		// 连接失败
-		return -1;
-	}
-	// 连接成功, 设置超时时间 1000ms
-	//  opt = 1000;
-	//  setsockopt(*sock,SOL_SOCKET,SO_RCVTIMEO,&opt,sizeof(int32_t));
-	// 返回套接字
-	return *sock;
+    int32_t ret;
+    struct sockaddr_in addr;
+    
+    // 初始化服务器信息
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_len = sizeof(addr);
+    addr.sin_family = AF_INET;
+    addr.sin_port = PP_HTONS(port);
+    addr.sin_addr.s_addr = inet_addr((const char *)servip);
+    
+    // 创建 socket
+    *sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (*sock < 0) {
+        return -1;
+    }
+    
+    // 关键修改：设置发送超时，避免 connect 阻塞太久
+    struct timeval timeout;
+    timeout.tv_sec = 5;  // 5秒连接超时
+    timeout.tv_usec = 0;
+    setsockopt(*sock, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
+    
+    // 连接服务器
+    ret = connect(*sock, (struct sockaddr *)&addr, sizeof(addr));
+    if (ret != 0)
+    {
+        // 关键：先获取错误码
+        //int32_t err = errno;
+        
+        // 关键：延迟一会儿再关闭，让 LwIP 完成清理
+        vTaskDelay(10);  // FreeRTOS 延迟 10ms
+        
+        // 关闭链接
+        close(*sock);
+        
+        //printf("connect failed, errno=%d\n", err);
+        return -1;
+    }
+    
+    // 连接成功，恢复默认超时（或设置接收超时）
+    timeout.tv_sec = 1;
+    timeout.tv_usec = 0;
+    setsockopt(*sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+    
+    return *sock;
 }
 /************************************************************************
 ** 函数名称: transport_close
