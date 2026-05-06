@@ -38,12 +38,16 @@ uint8_t MQTT_Connect(void)
 	uint8_t buf[200];
 	int buflen = sizeof(buf);
 	int len = 0;
+	uint8_t result;
 	data.clientID.cstring = CLIENT_ID;		// 随机
 	data.keepAliveInterval = KEEPLIVE_TIME; // 保持活跃
 	data.username.cstring = USER_NAME;		// 用户名
 	data.password.cstring = PASSWORD;		// 密钥
 	data.MQTTVersion = MQTT_VERSION;		// 3表示3.1版本，4表示3.11版本
 	data.cleansession = 1;
+
+	/* 整个 CONNECT/CONNACK 必须独占 socket，防止另一线程在等待 CONNACK 期间 close */
+	transport_lock();
 	// 组装消息
 	len = MQTTSerialize_connect((unsigned char *)buf, buflen, &data);
 	// 发送消息
@@ -56,17 +60,21 @@ uint8_t MQTT_Connect(void)
 		if (MQTTDeserialize_connack(&sessionPresent, &connack_rc, buf, buflen) != 1 || connack_rc != 0)
 		{
 			// PRINT_DEBUG("无法连接，错误代码是: %d！\n", connack_rc);
-			return Connect_NOK;
+			result = Connect_NOK;
 		}
 		else
 		{
 			// PRINT_DEBUG("用户名与密钥验证成功，MQTT连接成功！\n");
-			return Connect_OK;
+			result = Connect_OK;
 		}
 	}
 	else
+	{
 		// PRINT_DEBUG("MQTT连接无响应！\n");
-		return Connect_NOTACK;
+		result = Connect_NOTACK;
+	}
+	transport_unlock();
+	return result;
 }
 
 /************************************************************************
@@ -83,8 +91,12 @@ int32_t MQTT_PingReq(int32_t sock)
 	int32_t buflen = sizeof(buf);
 	fd_set readfd;
 	struct timeval tv;
+	int32_t rc;
 	tv.tv_sec = 5;
 	tv.tv_usec = 0;
+
+	/* PING 整段持锁: send -> select -> read 必须原子 */
+	transport_lock();
 
 	FD_ZERO(&readfd);
 	FD_SET(sock, &readfd);
@@ -93,17 +105,22 @@ int32_t MQTT_PingReq(int32_t sock)
 	transport_sendPacketBuffer(buf, len);
 
 	// 等待可读事件
-	if (select(sock + 1, &readfd, NULL, NULL, &tv) == 0)
-		return -1;
-
+	if (select(sock + 1, &readfd, NULL, NULL, &tv) == 0) {
+		rc = -1;
+	}
 	// 有可读事件
-	if (FD_ISSET(sock, &readfd) == 0)
-		return -2;
+	else if (FD_ISSET(sock, &readfd) == 0) {
+		rc = -2;
+	}
+	else if (MQTTPacket_read(buf, buflen, transport_getdata) != PINGRESP) {
+		rc = -3;
+	}
+	else {
+		rc = 0;
+	}
 
-	if (MQTTPacket_read(buf, buflen, transport_getdata) != PINGRESP)
-		return -3;
-
-	return 0;
+	transport_unlock();
+	return rc;
 }
 
 /************************************************************************
@@ -127,8 +144,12 @@ int32_t MQTTSubscribe(int32_t sock, char *topic, enum QoS pos)
 	uint8_t req_qos, qosbk;
 	fd_set readfd;
 	struct timeval tv;
+	int32_t rc;
 	tv.tv_sec = 2;
 	tv.tv_usec = 0;
+
+	/* SUBSCRIBE/SUBACK 整段持锁 */
+	transport_lock();
 
 	FD_ZERO(&readfd);
 	FD_SET(sock, &readfd);
@@ -141,30 +162,36 @@ int32_t MQTTSubscribe(int32_t sock, char *topic, enum QoS pos)
 	// 串行化订阅消息
 	len = MQTTSerialize_subscribe(buf, buflen, 0, PacketID++, 1, &topicString, &req_qos);
 	// 发送TCP数据
-	if (transport_sendPacketBuffer(buf, len) < 0)
-		return -1;
-
+	if (transport_sendPacketBuffer(buf, len) < 0) {
+		rc = -1;
+	}
 	// 等待可读事件--等待超时
-	if (select(sock + 1, &readfd, NULL, NULL, &tv) == 0)
-		return -2;
+	else if (select(sock + 1, &readfd, NULL, NULL, &tv) == 0) {
+		rc = -2;
+	}
 	// 有可读事件--没有可读事件
-	if (FD_ISSET(sock, &readfd) == 0)
-		return -3;
-
+	else if (FD_ISSET(sock, &readfd) == 0) {
+		rc = -3;
+	}
 	// 等待订阅返回--未收到订阅返回
-	if (MQTTPacket_read(buf, buflen, transport_getdata) != SUBACK)
-		return -4;
-
+	else if (MQTTPacket_read(buf, buflen, transport_getdata) != SUBACK) {
+		rc = -4;
+	}
 	// 拆订阅回应包
-	if (MQTTDeserialize_suback(&packetidbk, 1, &conutbk, &qosbk, buf, buflen) != 1)
-		return -5;
-
+	else if (MQTTDeserialize_suback(&packetidbk, 1, &conutbk, &qosbk, buf, buflen) != 1) {
+		rc = -5;
+	}
 	// 检测返回数据的正确性
-	if ((qosbk == 0x80) || (packetidbk != (PacketID - 1)))
-		return -6;
+	else if ((qosbk == 0x80) || (packetidbk != (PacketID - 1))) {
+		rc = -6;
+	}
+	else {
+		// 订阅成功
+		rc = 0;
+	}
 
-	// 订阅成功
-	return 0;
+	transport_unlock();
+	return rc;
 }
 
 /************************************************************************
@@ -230,6 +257,7 @@ int32_t MQTTMsgPublish(int32_t sock, char *topic, int8_t qos, uint8_t *msg)
 	int32_t buflen = sizeof(buf), len;
 	MQTTString topicString = MQTTString_initializer;
 	uint16_t packid = 0, packetidbk;
+	int32_t rc;
 
 	// 填充主题
 	topicString.cstring = (char *)topic;
@@ -248,46 +276,59 @@ int32_t MQTTMsgPublish(int32_t sock, char *topic, int8_t qos, uint8_t *msg)
 
 	msg_len = strlen((char *)msg);
 
+	/* PUBLISH 整段持锁，确保 publish/PUBACK/PUBREC/PUBREL/PUBCOMP 序列原子 */
+	transport_lock();
+
 	// 推送消息
 	len = MQTTSerialize_publish(buf, buflen, 0, qos, retained, packid, topicString, (unsigned char *)msg, msg_len);
-	if (len <= 0)
-		return -1;
-	if (transport_sendPacketBuffer(buf, len) < 0)
-		return -2;
-
-	// 质量等级0，不需要返回
-	if (qos == QOS0)
-	{
-		return 0;
+	if (len <= 0) {
+		rc = -1;
 	}
-
+	else if (transport_sendPacketBuffer(buf, len) < 0) {
+		rc = -2;
+	}
+	// 质量等级0，不需要返回
+	else if (qos == QOS0) {
+		rc = 0;
+	}
 	// 等级1
-	if (qos == QOS1)
+	else if (qos == QOS1)
 	{
 		// 等待PUBACK
 		if (WaitForPacket(sock, PUBACK, 5) < 0)
-			return -3;
-		return 1;
+			rc = -3;
+		else
+			rc = 1;
 	}
 	// 等级2
-	if (qos == QOS2)
+	else if (qos == QOS2)
 	{
 		// 等待PUBREC
-		if (WaitForPacket(sock, PUBREC, 5) < 0)
-			return -3;
+		if (WaitForPacket(sock, PUBREC, 5) < 0) {
+			rc = -3;
+		}
 		// 发送PUBREL
-		len = MQTTSerialize_pubrel(buf, buflen, 0, packetidbk);
-		if (len == 0)
-			return -4;
-		if (transport_sendPacketBuffer(buf, len) < 0)
-			return -6;
+		else if ((len = MQTTSerialize_pubrel(buf, buflen, 0, packetidbk)) == 0) {
+			rc = -4;
+		}
+		else if (transport_sendPacketBuffer(buf, len) < 0) {
+			rc = -6;
+		}
 		// 等待PUBCOMP
-		if (WaitForPacket(sock, PUBREC, 5) < 0)
-			return -7;
-		return 2;
+		else if (WaitForPacket(sock, PUBREC, 5) < 0) {
+			rc = -7;
+		}
+		else {
+			rc = 2;
+		}
 	}
-	// 等级错误
-	return -8;
+	else {
+		// 等级错误
+		rc = -8;
+	}
+
+	transport_unlock();
+	return rc;
 }
 
 /************************************************************************
@@ -304,6 +345,11 @@ int32_t ReadPacketTimeout(int32_t sock, uint8_t *buf, int32_t buflen, uint32_t t
 {
 	fd_set readfd;
 	struct timeval tv;
+	int32_t rc;
+
+	/* select + read 必须原子，保证另一线程不会在两者之间 close socket */
+	transport_lock();
+
 	if (timeout != 0)
 	{
 		tv.tv_sec = timeout;
@@ -312,14 +358,20 @@ int32_t ReadPacketTimeout(int32_t sock, uint8_t *buf, int32_t buflen, uint32_t t
 		FD_SET(sock, &readfd);
 
 		// 等待可读事件--等待超时
-		if (select(sock + 1, &readfd, NULL, NULL, &tv) == 0)
+		if (select(sock + 1, &readfd, NULL, NULL, &tv) == 0) {
+			transport_unlock();
 			return -1;
+		}
 		// 有可读事件--没有可读事件
-		if (FD_ISSET(sock, &readfd) == 0)
+		if (FD_ISSET(sock, &readfd) == 0) {
+			transport_unlock();
 			return -1;
+		}
 	}
 	// 读取TCP/IP事件
-	return MQTTPacket_read(buf, buflen, transport_getdata);
+	rc = MQTTPacket_read(buf, buflen, transport_getdata);
+	transport_unlock();
+	return rc;
 }
 
 /************************************************************************
@@ -555,8 +607,17 @@ MQTT_START:
 		// 表明无数据交换
 		no_mqtt_msg_exchange = 1;
 
+		/* select + 可能的 read 必须在锁内: 否则另一个线程在我们 select 期间
+		 * 调用 close()，会让 sockets[i].select_waiting!=0 的状态泄漏，
+		 * 下次 alloc_socket 时触发断言 */
+		transport_lock();
+
 		FD_ZERO(&readfd);
 		FD_SET(MQTT_Socket, &readfd);
+
+		/* tv 每次重置: lwIP 的 select 可能修改它 */
+		tv.tv_sec = 0;
+		tv.tv_usec = 10;
 
 		// 等待可读事件
 		select(MQTT_Socket + 1, &readfd, NULL, NULL, &tv);
@@ -575,6 +636,8 @@ MQTT_START:
 				curtick = xTaskGetTickCount();
 			}
 		}
+
+		transport_unlock();
 
 		// 这里主要目的是定时向服务器发送PING保活命令
 		if ((xTaskGetTickCount() - curtick) > (KEEPLIVE_TIME / 2 * 1000))
@@ -683,6 +746,11 @@ MQTT_SEND_START:
 			// 表明有数据交换
 			no_mqtt_msg_exchange = 0;
 		}
+
+		/* 必须节流: 否则本线程优先级 7 高于 recv(6)，busy-loop 会持续抢
+		 * MQTT 互斥锁，导致 recv_thread 几乎拿不到 CPU，且 broker 会被 publish
+		 * 风暴打爆。原本 xQueueReceive 提供的阻塞被注释掉了，这里替补一个 delay。 */
+		vTaskDelay(1000);
 	}
 MQTT_SEND_CLOSE:
 	// 关闭链接
@@ -694,6 +762,8 @@ MQTT_SEND_CLOSE:
 
 void mqtt_thread_init(void)
 {
+	/* 必须在创建任何使用 socket 的线程之前初始化互斥锁 */
+	transport_init();
 	sys_thread_new("mqtt_recv_thread", mqtt_recv_thread, NULL, 2048, 6);
 	sys_thread_new("mqtt_send_thread", mqtt_send_thread, NULL, 2048, 7);
 }
