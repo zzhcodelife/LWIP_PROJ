@@ -18,6 +18,10 @@
  */
 extern QueueHandle_t MQTT_Data_Queue;
 
+/* DIAG: cortex-debug 在线观察 MQTT 实际尝试连接的目标 IP 字符串.
+ * 必须 volatile, 否则编译器可能把赋值优化掉. */
+volatile const char *g_mqtt_connect_target = "(uninit)";
+
 // 定义用户消息结构体
 MQTT_USER_MSG mqtt_user_msg;
 
@@ -527,6 +531,8 @@ void Client_Connect(void)
 #else
 	host_ip = HOST_NAME;
 #endif
+	/* DIAG: 排查阶段确认 transport_open 真正使用的 IP 字符串 */
+	g_mqtt_connect_target = host_ip;
 MQTT_START:
 
 	// 创建网络连接

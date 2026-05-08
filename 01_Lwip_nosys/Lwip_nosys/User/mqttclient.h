@@ -9,7 +9,12 @@
 #define   KEEPLIVE_TIME   60
 #define   MQTT_VERSION    4
 
-#ifdef    LWIP_DNS
+/* 注意: 这里必须用 #if 不能用 #ifdef
+ * lwip/opt.h 默认会 #define LWIP_DNS 0
+ * 如果用 #ifdef, 那么只要 LWIP_DNS 被定义(即使为 0)也会进入 DNS 分支。
+ * 但 mqttclient.c 里用的是 #if LWIP_DNS, 在 LWIP_DNS=0 时会进入 else 分支，
+ * 两边不一致会把域名字符串当 IP 字符串塞给 inet_addr(), 结果变成 INADDR_NONE。 */
+#if LWIP_DNS
 #define   HOST_NAME       "mqtt.heclouds.com"     //服务器域名
 #else
 #define   HOST_NAME       "208.201.45.7"     //服务器IP地址
