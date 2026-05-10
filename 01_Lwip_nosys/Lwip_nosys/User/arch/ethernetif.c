@@ -7,7 +7,6 @@
 #include "netif/etharp.h"
 #include "lwip/ethip6.h"
 #include "ethernetif.h"
-#include "net_diag.h"
 #include <string.h>
 
 
@@ -205,32 +204,12 @@ static struct pbuf * low_level_input(struct netif *netif)
   if (HAL_ETH_GetReceivedFrame(&heth) != HAL_OK)
   {
 //    PRINT_ERR("receive frame faild\n");
-    g_diag_eth_rx_get_fail++;
     return NULL;
   }
   /* Obtain the size of the packet and put it into the "len" variable. */
   len = heth.RxFrameInfos.length;
   buffer = (uint8_t *)heth.RxFrameInfos.buffer;
 
-  /* DIAG: 每个成功取到的以太网帧计数 + 关键字段快照 */
-  g_diag_eth_rx_count++;
-  /* 收满 10 帧后置 flag (一次性, 不再清零). 供调试器在此打条件断点,
-   * 或在 Watch 里直接观察这个 flag 的跳变作为时间标记. */
-  if (g_diag_eth_rx_count > 15) {
-    g_diag_eth_rx_over10 = 1;
-  }
-  g_diag_eth_rx_last_len = (uint16_t)len;
-  if (buffer != NULL && len >= 14) {
-    g_diag_eth_rx_last_smac[0] = buffer[6];
-    g_diag_eth_rx_last_smac[1] = buffer[7];
-    g_diag_eth_rx_last_smac[2] = buffer[8];
-    g_diag_eth_rx_last_smac[3] = buffer[9];
-    g_diag_eth_rx_last_smac[4] = buffer[10];
-    g_diag_eth_rx_last_smac[5] = buffer[11];
-    /* EtherType in network order: IPv4=0x0800 -> 内存里 (0x08, 0x00) */
-    g_diag_eth_rx_last_etype = (uint16_t)((buffer[12] << 8) | buffer[13]);
-  }
-  
   //PRINT_INFO("receive frame %d len buffer : %s\n", len, buffer);
   if (len > 0)
   {

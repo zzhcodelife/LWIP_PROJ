@@ -58,7 +58,6 @@
 #if LWIP_ND6_TCP_REACHABILITY_HINTS
 #include "lwip/nd6.h"
 #endif /* LWIP_ND6_TCP_REACHABILITY_HINTS */
-#include "net_diag.h"
 
 #include <string.h>
 
@@ -142,23 +141,6 @@ tcp_input(struct pbuf *p, struct netif *inp)
   tcp_debug_print(tcphdr);
 #endif
 
-  /* DIAG: 计每个进入 tcp_input 的 TCP 段, 并把关键字段抓出来.
-   * 注意此时 tcphdr 已指向 TCP 头, ip_current_src_addr() 也已设置. */
-  g_diag_tcp_rx_count++;
-  if (p->len >= TCP_HLEN) {
-    g_diag_tcp_rx_last_src_ip   = lwip_ntohl(ip_2_ip4(ip_current_src_addr())->addr);
-    g_diag_tcp_rx_last_src_port = lwip_ntohs(tcphdr->src);
-    g_diag_tcp_rx_last_dst_port = lwip_ntohs(tcphdr->dest);
-    g_diag_tcp_rx_last_flags    = (uint8_t)TCPH_FLAGS(tcphdr);
-    g_diag_tcp_rx_last_seq      = lwip_ntohl(tcphdr->seqno);
-    g_diag_tcp_rx_last_ack      = lwip_ntohl(tcphdr->ackno);
-    /* OneNET 218.201.45.7 host-order = 0xDAC92D07 */
-    if (g_diag_tcp_rx_last_src_ip == 0xDAC92D07U) {
-      g_diag_tcp_from_onenet++;
-      g_diag_tcp_from_onenet_last_flags = g_diag_tcp_rx_last_flags;
-    }
-  }
-
   /* Check that TCP header fits in payload */
   if (p->len < TCP_HLEN) {
     /* drop short packets */
@@ -184,7 +166,6 @@ tcp_input(struct pbuf *p, struct netif *inp)
                                     chksum));
       tcp_debug_print(tcphdr);
       TCP_STATS_INC(tcp.chkerr);
-      g_diag_tcp_rx_chkdrop++;
       goto dropped;
     }
   }
