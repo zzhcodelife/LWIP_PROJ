@@ -5,7 +5,8 @@
 
 
 #define   MSG_MAX_LEN     500
-#define   MSG_TOPIC_LEN   50
+/* OneNET $sys/... 主题较长，需大于最长主题字符串（含结尾 0） */
+#define   MSG_TOPIC_LEN   96
 #define   KEEPLIVE_TIME   60
 #define   MQTT_VERSION    4
 
@@ -17,7 +18,7 @@
 #if LWIP_DNS
 #define   HOST_NAME       "mqtt.heclouds.com"     //服务器域名
 #else
-#define   HOST_NAME       "208.201.45.7"     //服务器IP地址
+#define   HOST_NAME       "218.201.45.7"     //服务器IP地址
 #endif
 
 
@@ -27,7 +28,9 @@
 #define   USER_NAME     "E0z4YBrg9x"     //用户名
 #define   PASSWORD      "version=2018-10-31&res=products%2FE0z4YBrg9x%2Fdevices%2FMydevice_stm32_1&et=1782777600&method=sha1&sign=fkRD77%2BDxfwmRIr6UshlnwCJR7s%3D"  //秘钥
 
-#define   TOPIC         "$sys/E0z4YBrg9x/Mydevice_stm32_1/thing/property/post/reply"      //订阅的主题
+/* 物模型属性上报：发到 post，在 post/reply 上收平台应答 */
+#define   TOPIC_PUBLISH   "$sys/E0z4YBrg9x/Mydevice_stm32_1/thing/property/post"
+#define   TOPIC_SUBSCRIBE "$sys/E0z4YBrg9x/Mydevice_stm32_1/thing/property/post/reply"
 
 #define   TEST_MESSAGE  "test_message"  //发送测试消息
 

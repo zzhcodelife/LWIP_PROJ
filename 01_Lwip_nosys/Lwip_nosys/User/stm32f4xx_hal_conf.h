@@ -352,14 +352,21 @@ extern "C"
 
 /* ############ Ethernet peripheral configuration ################# */
 /* Section 1 : Ethernet peripheral configuration */
-/* MAC ADDRESS: MAC_ADDR0:MAC_ADDR1:MAC_ADDR2:MAC_ADDR3:MAC_ADDR4:MAC_
-ADDR5 */
-#define MAC_ADDR0 2U
-#define MAC_ADDR1 0U
-#define MAC_ADDR2 0U
-#define MAC_ADDR3 0U
-#define MAC_ADDR4 0U
-#define MAC_ADDR5 0U
+/* MAC ADDRESS: MAC_ADDR0:MAC_ADDR1:MAC_ADDR2:MAC_ADDR3:MAC_ADDR4:MAC_ADDR5
+ *
+ * 必须是有效的单播 MAC, 不能写成全 0 (除 LA 位). 全 0 MAC 会被 PC ICS / Hyper-V
+ * 虚拟桥当作非法地址, 反向 NAT 转发回来的 SYN/ACK 会被 drop, 表现为"板子能发包
+ * 但收不到任何回包"。
+ *   - MAC_ADDR0 第一字节: 0x02 = bit1(LA)=1 + bit0(单播)=0
+ *   - 其余字节: 任意非零唯一值即可; 这里末字节 0x12 与本机 IP 192.168.137.18
+ *     的末字节对齐, 方便人眼/Wireshark 辨识. 多板共存时建议改成由 STM32 96-bit
+ *     UID 派生 (HAL_GetUIDw0/1/2). */
+#define MAC_ADDR0 0x02U
+#define MAC_ADDR1 0x80U
+#define MAC_ADDR2 0xE1U
+#define MAC_ADDR3 0x00U
+#define MAC_ADDR4 0x01U
+#define MAC_ADDR5 0x12U
 /* Definition of the Ethernet driver buffers size and count */
 #define ETH_RX_BUF_SIZE ETH_MAX_PACKET_SIZE
 /* buffer size for receive */

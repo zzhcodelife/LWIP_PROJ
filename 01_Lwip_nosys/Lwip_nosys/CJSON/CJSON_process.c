@@ -1,5 +1,4 @@
 #include "cJSON_Process.h"
-#include "main.h"
 
 /*******************************************************************
  *                          变量声明                               
@@ -9,76 +8,108 @@
 
 cJSON* cJSON_Data_Init(void)
 {
-  cJSON* cJSON_Root = NULL;    //json根节点
-  
-  cJSON_Root = cJSON_CreateObject();   /*创建项目*/
-  if(NULL == cJSON_Root)
-  {
-      return NULL;
-  }
-  cJSON_AddStringToObject(cJSON_Root, NAME, DEFAULT_NAME);  /*添加元素  键值对*/
-  cJSON_AddNumberToObject(cJSON_Root, POWER_STM32, DEFAULT_POWER);
-  cJSON_AddNumberToObject(cJSON_Root, TEMP_STM32, DEFAULT_TEMP);
-  
-  char* p = cJSON_Print(cJSON_Root);  /*p 指向的字符串是json格式的*/
-  
-//  PRINT_DEBUG("%s\n",p);
-  
-  vPortFree(p);
-  p = NULL;
-  
-  return cJSON_Root;
-  
-}
-uint8_t cJSON_Update(const cJSON * const object,const char * const string,void *d)
-{
-  cJSON* node = NULL;    //json根节点
-  node = cJSON_GetObjectItem(object,string);
-  if(node == NULL)
+  cJSON *cJSON_Root = NULL;
+  cJSON *params = NULL;
+  cJSON *node_power = NULL;
+  cJSON *node_temp = NULL;
+
+  cJSON_Root = cJSON_CreateObject();
+  if (cJSON_Root == NULL) {
     return NULL;
-  if(cJSON_IsBool(node))
-  {
-    int *b = (int*)d;
-//    printf ("d = %d",*b);
-    cJSON_GetObjectItem(object,string)->type = *b ? cJSON_True : cJSON_False;
-//    char* p = cJSON_Print(object);    /*p 指向的字符串是json格式的*/
-    return 1;
   }
-  else if(cJSON_IsString(node))
-  {
-    cJSON_GetObjectItem(object,string)->valuestring = (char*)d;
-//    char* p = cJSON_Print(object);    /*p 指向的字符串是json格式的*/
-    return 1;
+
+  /* OneNET: { "id","version","params":{ "power":{"value":"..."}, "temp":{"value":n} } } */
+  cJSON_AddStringToObject(cJSON_Root, JSON_MSG_ID, DEFAULT_MSG_ID);
+  cJSON_AddStringToObject(cJSON_Root, JSON_MSG_VERSION, DEFAULT_MSG_VERSION);
+
+  params = cJSON_AddObjectToObject(cJSON_Root, JSON_MSG_PARAMS);
+  if (params == NULL) {
+    cJSON_Delete(cJSON_Root);
+    return NULL;
   }
-  else if(cJSON_IsNumber(node))
-  {
-    double *num = (double*)d;
-//    printf ("num = %f",*num);
-//    cJSON_GetObjectItem(object,string)->valueint = (double)*num;
-    cJSON_GetObjectItem(object,string)->valuedouble = (double)*num;
-//    char* p = cJSON_Print(object);    /*p 指向的字符串是json格式的*/
-    return 1;
+
+  node_power = cJSON_AddObjectToObject(params, POWER_STM32);
+  if (node_power == NULL) {
+    cJSON_Delete(cJSON_Root);
+    return NULL;
   }
-  else
-    return 1;
+  cJSON_AddStringToObject(node_power, JSON_PARAM_VALUE, DEFAULT_POWER_STR);
+
+  node_temp = cJSON_AddObjectToObject(params, TEMP_STM32);
+  if (node_temp == NULL) {
+    cJSON_Delete(cJSON_Root);
+    return NULL;
+  }
+  cJSON_AddNumberToObject(node_temp, JSON_PARAM_VALUE, DEFAULT_TEMP);
+
+  return cJSON_Root;
+}
+uint8_t cJSON_Update(const cJSON * const object, const char * const string, void *d)
+{
+  cJSON *params;
+  cJSON *param_item;
+  cJSON *val;
+  cJSON *new_str;
+
+  params = cJSON_GetObjectItem((cJSON *)object, JSON_MSG_PARAMS);
+  if (params == NULL) {
+    return UPDATE_FAIL;
+  }
+  param_item = cJSON_GetObjectItem(params, string);
+  if (param_item == NULL) {
+    return UPDATE_FAIL;
+  }
+  val = cJSON_GetObjectItem(param_item, JSON_PARAM_VALUE);
+  if (val == NULL) {
+    return UPDATE_FAIL;
+  }
+
+  if (cJSON_IsString(val)) {
+    new_str = cJSON_CreateString((char *)d);
+    if (new_str == NULL) {
+      return UPDATE_FAIL;
+    }
+    cJSON_ReplaceItemInObject(param_item, JSON_PARAM_VALUE, new_str);
+    return UPDATE_SUCCESS;
+  }
+  if (cJSON_IsNumber(val)) {
+    cJSON_SetNumberValue(val, *(double *)d);
+    return UPDATE_SUCCESS;
+  }
+
+  return UPDATE_FAIL;
 }
 
-void Proscess(void* data)
+void Proscess(void *data)
 {
-  //PRINT_DEBUG("开始解析JSON数据");
-  cJSON *root,*json_name,*json_power,*json_temp;
-  root = cJSON_Parse((char*)data); //解析成json形式
-  
-  json_name = cJSON_GetObjectItem( root , NAME);  //获取键值内容
-  json_power = cJSON_GetObjectItem( root , POWER_STM32 );
-  json_temp = cJSON_GetObjectItem( root , TEMP_STM32 );
+  cJSON *root;
+  cJSON *params;
+  cJSON *json_power;
+  cJSON *json_temp;
+  cJSON *pv;
+  cJSON *tv;
 
-  // PRINT_DEBUG("name:%s\n temp_num:%f\n hum_num:%f\n",
-  //             json_name->valuestring,
-  //             json_power->valuedouble,
-  //             json_temp->valuedouble);
+  root = cJSON_Parse((char *)data);
+  if (root == NULL) {
+    return;
+  }
 
-  cJSON_Delete(root);  //释放内存 
+  /* 平台下行多为 id/version/params 或仅 data，优先按物模型解析 */
+  params = cJSON_GetObjectItem(root, JSON_MSG_PARAMS);
+  if (params != NULL) {
+    json_power = cJSON_GetObjectItem(params, POWER_STM32);
+    json_temp = cJSON_GetObjectItem(params, TEMP_STM32);
+    if (json_power != NULL) {
+      pv = cJSON_GetObjectItem(json_power, JSON_PARAM_VALUE);
+      (void)pv;
+    }
+    if (json_temp != NULL) {
+      tv = cJSON_GetObjectItem(json_temp, JSON_PARAM_VALUE);
+      (void)tv;
+    }
+  }
+
+  cJSON_Delete(root);
 }
 
 

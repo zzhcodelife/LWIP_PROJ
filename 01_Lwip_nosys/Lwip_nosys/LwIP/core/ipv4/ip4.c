@@ -56,6 +56,7 @@
 #include "lwip/autoip.h"
 #include "lwip/stats.h"
 #include "lwip/prot/iana.h"
+#include "net_diag.h"
 
 #include <string.h>
 
@@ -475,6 +476,9 @@ ip4_input(struct pbuf *p, struct netif *inp)
   IP_STATS_INC(ip.recv);
   MIB2_STATS_INC(mib2.ipinreceives);
 
+  /* DIAG: 计每个进入 ip4_input 的包. 后面的判头/校验和分支会有 drop 计数. */
+  g_diag_ip_rx_count++;
+
   /* identify the IP header */
   iphdr = (struct ip_hdr *)p->payload;
   if (IPH_V(iphdr) != 4) {
@@ -525,6 +529,7 @@ ip4_input(struct pbuf *p, struct netif *inp)
     IP_STATS_INC(ip.lenerr);
     IP_STATS_INC(ip.drop);
     MIB2_STATS_INC(mib2.ipindiscards);
+    g_diag_ip_rx_lendrop++;
     return ERR_OK;
   }
 
@@ -540,6 +545,7 @@ ip4_input(struct pbuf *p, struct netif *inp)
       IP_STATS_INC(ip.chkerr);
       IP_STATS_INC(ip.drop);
       MIB2_STATS_INC(mib2.ipinhdrerrors);
+      g_diag_ip_rx_chkdrop++;
       return ERR_OK;
     }
   }
@@ -548,6 +554,16 @@ ip4_input(struct pbuf *p, struct netif *inp)
   /* copy IP addresses to aligned ip_addr_t */
   ip_addr_copy_from_ip4(ip_data.current_iphdr_dest, iphdr->dest);
   ip_addr_copy_from_ip4(ip_data.current_iphdr_src, iphdr->src);
+
+  /* DIAG: 把每个有效 IPv4 包的关键字段快照出来.
+   * iphdr->src.addr 是 network order, 转 host order 方便人眼比对. */
+  g_diag_ip_rx_last_src   = lwip_ntohl(iphdr->src.addr);
+  g_diag_ip_rx_last_dst   = lwip_ntohl(iphdr->dest.addr);
+  g_diag_ip_rx_last_proto = IPH_PROTO(iphdr);
+  /* OneNET 218.201.45.7 host-order = 0xDAC92D07 */
+  if (g_diag_ip_rx_last_src == 0xDAC92D07U) {
+    g_diag_ip_from_onenet++;
+  }
 
   /* match packet against an interface, i.e. is this packet for us? */
   if (ip4_addr_ismulticast(ip4_current_dest_addr())) {

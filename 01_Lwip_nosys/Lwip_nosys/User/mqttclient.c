@@ -7,8 +7,12 @@
 #include "lwip/sys.h"
 #include "lwip/api.h"
 #include "lwip/sockets.h"
+#include "lwip/tcp.h"
+#include "lwip/tcpip.h"
+#include "lwip/priv/tcp_priv.h"
 #include "cJSON_Process.h"
 #include "transport.h"
+#include "net_diag.h"
 // #include "bsp_dht11.h"
 
 
@@ -21,6 +25,97 @@ extern QueueHandle_t MQTT_Data_Queue;
 /* DIAG: cortex-debug 在线观察 MQTT 实际尝试连接的目标 IP 字符串.
  * 必须 volatile, 否则编译器可能把赋值优化掉. */
 volatile const char *g_mqtt_connect_target = "(uninit)";
+
+/* ============================================================
+ * 网络诊断变量定义 (声明见 net_diag.h)
+ *
+ * 判读速查表:
+ *   1) 板子 ETH 是否在收包?
+ *      g_diag_eth_rx_count 持续增长  -> 是
+ *      只增 g_diag_eth_rx_get_fail   -> DMA 描述符报错 (硬件 checksum/ES 等)
+ *
+ *   2) OneNET 包到没到 IP 层?
+ *      g_diag_ip_from_onenet > 0     -> 到了
+ *      g_diag_ip_rx_count 涨但 from_onenet=0 -> ICS 没把回程包转过来 / DMAC 不对
+ *
+ *   3) OneNET 的包到 TCP 层了吗? 是 SYN/ACK 吗?
+ *      g_diag_tcp_from_onenet > 0
+ *      g_diag_tcp_from_onenet_last_flags == 0x12 (SYN+ACK)
+ *      g_diag_tcp_from_onenet_last_flags == 0x04 (RST, 被服务端拒)
+ *      g_diag_tcp_from_onenet_last_flags == 0x14 (RST+ACK)
+ *
+ *   4) 板子 TCP 状态机走到哪了?
+ *      g_diag_pcbs[i].remote_ip == 0xDAC92D07 那一行的 .state:
+ *        2=SYN_SENT (发了 SYN, 在等 SYN/ACK)
+ *        4=ESTABLISHED (握手完成, 应该已经在发 CONNECT)
+ *
+ *   组合判读:
+ *     ip_from_onenet=0 && tcp_from_onenet=0 -> SYN/ACK 根本没进板子
+ *     ip_from_onenet>0 && tcp_from_onenet=0 -> IP 层进来了但 TCP 没拿到 (校验和/路由)
+ *     tcp_from_onenet>0 但 pcb.state 一直 = 2 -> 收到了 SYN/ACK 但状态机没迁移 (异常)
+ * ============================================================ */
+
+volatile uint32_t g_diag_eth_rx_count        = 0;
+volatile uint32_t g_diag_eth_rx_get_fail     = 0;
+volatile uint16_t g_diag_eth_rx_last_len     = 0;
+volatile uint16_t g_diag_eth_rx_last_etype   = 0;
+volatile uint8_t  g_diag_eth_rx_last_smac[6] = {0};
+volatile uint8_t  g_diag_eth_rx_over10       = 0;
+
+volatile uint32_t g_diag_ip_rx_count       = 0;
+volatile uint32_t g_diag_ip_rx_chkdrop     = 0;
+volatile uint32_t g_diag_ip_rx_lendrop     = 0;
+volatile uint32_t g_diag_ip_rx_last_src    = 0;
+volatile uint32_t g_diag_ip_rx_last_dst    = 0;
+volatile uint8_t  g_diag_ip_rx_last_proto  = 0;
+volatile uint32_t g_diag_ip_from_onenet    = 0;
+
+volatile uint32_t g_diag_tcp_rx_count                = 0;
+volatile uint32_t g_diag_tcp_rx_chkdrop              = 0;
+volatile uint32_t g_diag_tcp_rx_last_src_ip          = 0;
+volatile uint16_t g_diag_tcp_rx_last_src_port        = 0;
+volatile uint16_t g_diag_tcp_rx_last_dst_port        = 0;
+volatile uint8_t  g_diag_tcp_rx_last_flags           = 0;
+volatile uint32_t g_diag_tcp_rx_last_seq             = 0;
+volatile uint32_t g_diag_tcp_rx_last_ack             = 0;
+volatile uint32_t g_diag_tcp_from_onenet             = 0;
+volatile uint8_t  g_diag_tcp_from_onenet_last_flags  = 0;
+
+volatile diag_pcb_t g_diag_pcbs[DIAG_PCB_MAX] = {0};
+volatile uint32_t   g_diag_pcb_scan_count     = 0;
+
+/* 扫描 tcp_active_pcbs 链表把当前 PCB 关键字段复制出来. 必须在 tcpip 线程
+ * 上下文 (即拿了核心锁) 调用. mqtt_recv_thread 是用户线程, 这里用
+ * LOCK_TCPIP_CORE / UNLOCK_TCPIP_CORE 包一下. */
+void diag_dump_pcbs(void)
+{
+    struct tcp_pcb *pcb;
+    int i;
+
+    LOCK_TCPIP_CORE();
+
+    for (i = 0; i < DIAG_PCB_MAX; i++) {
+        g_diag_pcbs[i].used = 0;
+    }
+
+    i = 0;
+    for (pcb = tcp_active_pcbs; pcb != NULL && i < DIAG_PCB_MAX; pcb = pcb->next) {
+        g_diag_pcbs[i].local_ip    = lwip_ntohl(ip_2_ip4(&pcb->local_ip)->addr);
+        g_diag_pcbs[i].remote_ip   = lwip_ntohl(ip_2_ip4(&pcb->remote_ip)->addr);
+        g_diag_pcbs[i].local_port  = pcb->local_port;
+        g_diag_pcbs[i].remote_port = pcb->remote_port;
+        g_diag_pcbs[i].state       = (uint8_t)pcb->state;
+        g_diag_pcbs[i].flags       = (uint16_t)pcb->flags;
+        g_diag_pcbs[i].snd_nxt     = pcb->snd_nxt;
+        g_diag_pcbs[i].rcv_nxt     = pcb->rcv_nxt;
+        g_diag_pcbs[i].used        = 1;
+        i++;
+    }
+
+    g_diag_pcb_scan_count++;
+
+    UNLOCK_TCPIP_CORE();
+}
 
 // 定义用户消息结构体
 MQTT_USER_MSG mqtt_user_msg;
@@ -567,7 +662,7 @@ MQTT_START:
 	// 订阅消息
 	//PRINT_DEBUG("3.开始订阅消息...\n");
 	// 订阅消息
-	if (MQTTSubscribe(MQTT_Socket, (char *)TOPIC, QOS1) < 0)
+	if (MQTTSubscribe(MQTT_Socket, (char *)TOPIC_SUBSCRIBE, QOS1) < 0)
 	{
 		// 重连服务器
 		//PRINT_DEBUG("客户端订阅消息失败...\n");
@@ -645,6 +740,11 @@ MQTT_START:
 
 		transport_unlock();
 
+		/* DIAG: 每轮主循环刷一次当前 TCP PCB 列表, 调试器看 g_diag_pcbs[].
+		 * 注意必须在 transport_unlock 之后, 防止 transport_mtx 与
+		 * lock_tcpip_core 形成嵌套. */
+		diag_dump_pcbs();
+
 		// 这里主要目的是定时向服务器发送PING保活命令
 		if ((xTaskGetTickCount() - curtick) > (KEEPLIVE_TIME / 2 * 1000))
 		{
@@ -691,8 +791,9 @@ void mqtt_send_thread(void *pvParameters)
 	// 初始化json数据
 	cJSON *cJSON_Data = NULL;
 	cJSON_Data = cJSON_Data_Init();
-	char a[] = "789";
-	double b = 23.7;
+	/* power 为字符串型属性；temp 为数值型，与物模型 JSON 一致 */
+	char power_str[] = "789";
+	double temp_val = 27.4;
 MQTT_SEND_START:
 
 	while (1)
@@ -707,15 +808,15 @@ MQTT_SEND_START:
 			// b = recv_data->humidity;
 			//        printf("a = %f,b = %f\n",a,b);
 			// 更新数据
-			res = cJSON_Update(cJSON_Data,POWER_STM32, &a);
-			res = cJSON_Update(cJSON_Data,TEMP_STM32, &b);
+			res = cJSON_Update(cJSON_Data, POWER_STM32, power_str);
+			res = cJSON_Update(cJSON_Data, TEMP_STM32, &temp_val);
 
 			if (UPDATE_SUCCESS == res)
 			{
 				// 更新数据成功，
 				char *p = cJSON_Print(cJSON_Data);
 				// 发布消息
-				ret = MQTTMsgPublish(MQTT_Socket, (char *)TOPIC, QOS0, (uint8_t *)p);
+				ret = MQTTMsgPublish(MQTT_Socket, (char *)TOPIC_PUBLISH, QOS0, (uint8_t *)p);
 				if (ret >= 0)
 				{
 					// 表明有数据交换

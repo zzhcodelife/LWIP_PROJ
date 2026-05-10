@@ -156,7 +156,15 @@ HAL_StatusTypeDef Bsp_Eth_Init(void)
 {
   HAL_StatusTypeDef ret;
 
-  uint8_t MACAddr[6];
+  /* 必须是 static: HAL_ETH_Init 把 &MACAddr 存进 heth.Init.MACAddr,
+   * ethernetif.c::low_level_init 之后还要通过这个指针读 6 个字节复制到
+   * gnetif.hwaddr. 如果是栈上的局部数组, 函数返回后这 6 字节会被后续函数
+   * 调用覆盖, gnetif.hwaddr 就会拿到一组随机字节, 表现为 PC 端 ARP 学到一个
+   * "随每次复位变化的伪 MAC", 收不到任何回包. */
+  static uint8_t MACAddr[6] = {
+      MAC_ADDR0, MAC_ADDR1, MAC_ADDR2,
+      MAC_ADDR3, MAC_ADDR4, MAC_ADDR5
+  };
 
   HAL_ETH_DeInit(&heth);
 
@@ -165,12 +173,6 @@ HAL_StatusTypeDef Bsp_Eth_Init(void)
   ETH->DMABMR |= ETH_DMABMR_SR;
 
   /* Init ETH */
-  MACAddr[0] = 0x02;
-  MACAddr[1] = 0x00;
-  MACAddr[2] = 0x00;
-  MACAddr[3] = 0x00;
-  MACAddr[4] = 0x00;
-  MACAddr[5] = 0x00;
   heth.Instance = ETH;
   heth.Init.AutoNegotiation = ETH_AUTONEGOTIATION_DISABLE;
   heth.Init.PhyAddress = LAN8720_PHY_ADDRESS;
