@@ -86,20 +86,6 @@ virtualFolder:
         - path: ../Lwip_nosys/Libraries/STM32F4xx_HAL_Driver/Src/stm32f4xx_ll_sdmmc.c
         - path: ../Lwip_nosys/Libraries/STM32F4xx_HAL_Driver/Src/stm32f4xx_ll_usb.c
       folders: []
-    - name: USER
-      files:
-        - path: ../Lwip_nosys/User/main.c
-        - path: ../Lwip_nosys/User/eth/bsp_eth.c
-        - path: ../Lwip_nosys/User/eth/bsp_eth.h
-        - path: ../Lwip_nosys/User/board.c
-        - path: ../Lwip_nosys/User/stm32f4xx_it.c
-        - path: ../Lwip_nosys/User/client.c
-        - path: ../Lwip_nosys/User/tcpecho.c
-        - path: ../Lwip_nosys/User/udpecho.c
-        - path: ../Lwip_nosys/User/socketclient.c
-        - path: ../Lwip_nosys/User/socketserver.c
-        - path: ../Lwip_nosys/User/socketudp.c
-      folders: []
     - name: DOC
       files:
         - path: ../Lwip_nosys/Doc/readme.txt
@@ -239,6 +225,60 @@ virtualFolder:
             - path: ../Lwip_nosys/FreeRTOS/portable/MemMang/heap_4.c
             - path: ../Lwip_nosys/FreeRTOS/portable/RVDS/ARM_CM4F/port.c
           folders: []
+    - name: USER
+      files:
+        - path: ../Lwip_nosys/User/main.c
+        - path: ../Lwip_nosys/User/eth/bsp_eth.c
+        - path: ../Lwip_nosys/User/eth/bsp_eth.h
+        - path: ../Lwip_nosys/User/board.c
+        - path: ../Lwip_nosys/User/stm32f4xx_it.c
+        - path: ../Lwip_nosys/User/client.c
+        - path: ../Lwip_nosys/User/tcpecho.c
+        - path: ../Lwip_nosys/User/udpecho.c
+        - path: ../Lwip_nosys/User/socketclient.c
+        - path: ../Lwip_nosys/User/socketserver.c
+        - path: ../Lwip_nosys/User/socketudp.c
+        - path: ../Lwip_nosys/User/tcp_client_raw.c
+        - path: ../Lwip_nosys/User/iperf_test.c
+        - path: ../Lwip_nosys/User/iperf_socket_test.c
+        - path: ../Lwip_nosys/User/iperf_client.c
+        - path: ../Lwip_nosys/User/iperf_client_socket.c
+        - path: ../Lwip_nosys/User/http_netconn_server.c
+        - path: ../Lwip_nosys/User/http_netconn_server_led.c
+        - path: ../Lwip_nosys/User/mqttclient.c
+        - path: ../Lwip_nosys/User/mqttclient.h
+      folders: []
+    - name: Mqtt
+      files:
+        - path: ../Lwip_nosys/Mqtt/MQTTConnect.h
+        - path: ../Lwip_nosys/Mqtt/MQTTConnectClient.c
+        - path: ../Lwip_nosys/Mqtt/MQTTConnectServer.c
+        - path: ../Lwip_nosys/Mqtt/MQTTDeserializePublish.c
+        - path: ../Lwip_nosys/Mqtt/MQTTFormat.c
+        - path: ../Lwip_nosys/Mqtt/MQTTFormat.h
+        - path: ../Lwip_nosys/Mqtt/MQTTPacket.c
+        - path: ../Lwip_nosys/Mqtt/MQTTPacket.h
+        - path: ../Lwip_nosys/Mqtt/MQTTPublish.h
+        - path: ../Lwip_nosys/Mqtt/MQTTSerializePublish.c
+        - path: ../Lwip_nosys/Mqtt/MQTTSubscribe.h
+        - path: ../Lwip_nosys/Mqtt/MQTTSubscribeClient.c
+        - path: ../Lwip_nosys/Mqtt/MQTTSubscribeServer.c
+        - path: ../Lwip_nosys/Mqtt/MQTTUnsubscribe.h
+        - path: ../Lwip_nosys/Mqtt/MQTTUnsubscribeClient.c
+        - path: ../Lwip_nosys/Mqtt/MQTTUnsubscribeServer.c
+        - path: ../Lwip_nosys/Mqtt/StackTrace.h
+        - path: ../Lwip_nosys/Mqtt/transport.c
+        - path: ../Lwip_nosys/Mqtt/transport.h
+      folders: []
+    - name: CJOSN
+      files:
+        - path: ../Lwip_nosys/CJSON/cJSON.c
+        - path: ../Lwip_nosys/CJSON/cJSON.h
+        - path: ../Lwip_nosys/CJSON/cJSON_Process.c
+        - path: ../Lwip_nosys/CJSON/cJSON_Process.h
+        - path: ../Lwip_nosys/CJSON/cJSON_Utils.c
+        - path: ../Lwip_nosys/CJSON/cJSON_Utils.h
+      folders: []
 dependenceList: []
 outDir: build
 miscInfo:
@@ -262,6 +302,8 @@ targets:
         - ../Lwip_nosys/FreeRTOS/include
         - ../Lwip_nosys/FreeRTOS/portable/RVDS/ARM_CM4F
         - ../Lwip_nosys/LwIP/include
+        - ../Lwip_nosys/CJSON
+        - ../Lwip_nosys/Mqtt
       libList: []
     excludeList: []
     settings:

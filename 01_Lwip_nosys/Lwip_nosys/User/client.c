@@ -20,7 +20,7 @@ static void client(void *thread_param)
         }
 
         // 服务器IP
-        IP4_ADDR(&ipaddr, 192, 168, 0, 181);
+        IP4_ADDR(&ipaddr, 192, 168, 195, 92);
 
         // 连接服务器
         ret = netconn_connect(conn, &ipaddr, 5005);

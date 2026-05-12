@@ -4,7 +4,7 @@
 #include "lwip/api.h"
 #include <lwip/sockets.h>
 #define PORT 5006
-#define IP_ADDR "192.168.0.181"
+#define IP_ADDR "192.168.195.92"
 static void socket_client(void *thread_param)
 {
     int sock = -1;
