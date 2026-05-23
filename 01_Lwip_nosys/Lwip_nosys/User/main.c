@@ -26,9 +26,6 @@
 #include "task.h"
 #include "queue.h"
 #include "sdio/sdio_test.h"
-/* 野火 BSP（需将 led/key/usart 驱动加入工程） */
-#include "led/bsp_led.h"
-#include "key/bsp_key.h"
 
 /**************************** 任务句柄 ********************************/
 /* 
@@ -37,7 +34,7 @@
  * 这个句柄可以为NULL。
  */
 static TaskHandle_t AppTaskCreate_Handle = NULL;/* 创建任务句柄 */
-static TaskHandle_t SD_App_Task_Handle = NULL;/* SD卡/按键任务句柄 */
+static TaskHandle_t SD_App_Task_Handle = NULL;/* SD卡轮询任务句柄 */
 
 /********************************** 内核对象句柄 *********************************/
 /*
@@ -58,10 +55,7 @@ static TaskHandle_t SD_App_Task_Handle = NULL;/* SD卡/按键任务句柄 */
 
 
 /******************************* 宏定义 ************************************/
-/*
- * 当我们在写应用程序的时候，可能需要用到一些宏定义。
- */
-
+#define SD_APP_TASK_PERIOD_MS   (2U * 60U * 1000U)  /* 每 2 分钟执行一次 SD_Test */
 
 /*
 *************************************************************************
@@ -153,16 +147,18 @@ static void WIFI_PDN_INIT(void)
 
 /**********************************************************************
   * @ 函数名  ： SD_App_Task
-  * @ 功能说明： SD卡测试、按键检测（原 main 中 while 循环逻辑）
+  * @ 功能说明： 每 2 分钟轮询执行一次 SD_Test
   ********************************************************************/
 static void SD_App_Task(void* parameter)
 {
   (void)parameter;
+
   WIFI_PDN_INIT();
+
   for (;;)
   {
     SD_Test();
-    vTaskDelay(pdMS_TO_TICKS(20));
+    vTaskDelay(pdMS_TO_TICKS(SD_APP_TASK_PERIOD_MS));
   }
 }
 
