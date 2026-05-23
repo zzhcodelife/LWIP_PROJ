@@ -1,0 +1,38 @@
+{
+    "configurations": [
+        {
+            "name": "STM32F429",
+            "includePath": [
+                "${workspaceFolder}",
+                "${workspaceFolder}/User",
+                "${workspaceFolder}/User/arch",
+                "${workspaceFolder}/Libraries/CMSIS/Include",
+                "${workspaceFolder}/Libraries/CMSIS/Device/ST/STM32F4xx/Include",
+                "${workspaceFolder}/Libraries/STM32F4xx_HAL_Driver/Inc",
+                "${workspaceFolder}/FreeRTOS/include",
+                "${workspaceFolder}/FreeRTOS/portable/RVDS/ARM_CM4F",
+                "${workspaceFolder}/LwIP/include",
+                "${workspaceFolder}/CJSON",
+                "${workspaceFolder}/Mqtt",
+                "${workspaceFolder}/Project/RTE/_build_template",
+                "${workspaceFolder}/../Lwip_nosys_eied/.cmsis/include"
+            ],
+            "defines": [
+                "USE_HAL_DRIVER",
+                "STM32F429xx",
+                "USE_STM32F429I_DISCO"
+            ],
+            "compilerPath": "",
+            "cStandard": "c11",
+            "intelliSenseMode": "gcc-arm",
+            "browse": {
+                "path": [
+                    "${workspaceFolder}",
+                    "${workspaceFolder}/../Lwip_nosys_eied/.cmsis/include"
+                ],
+                "limitSymbolsToIncludedHeaders": false
+            }
+        }
+    ],
+    "version": 4
+}

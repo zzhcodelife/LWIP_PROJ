@@ -1,0 +1,20 @@
+# 无 compile_commands.json 时供 clangd 解析/跳转（与 .eide/eide.yml 中 incList、defineList 对齐）
+CompileFlags:
+  Add:
+    - -std=c11
+    - --target=thumbv7em-none-eabi
+    - -DUSE_HAL_DRIVER
+    - -DSTM32F429xx
+    - -DUSE_STM32F429I_DISCO
+    - -IUser
+    - -IUser/arch
+    - -ILibraries/CMSIS/Include
+    - -ILibraries/CMSIS/Device/ST/STM32F4xx/Include
+    - -ILibraries/STM32F4xx_HAL_Driver/Inc
+    - -IFreeRTOS/include
+    - -IFreeRTOS/portable/RVDS/ARM_CM4F
+    - -ILwIP/include
+    - -ICJSON
+    - -IMqtt
+    - -IProject/RTE/_build_template
+    - -I../Lwip_nosys_eied/.cmsis/include
