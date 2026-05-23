@@ -281,10 +281,8 @@ virtualFolder:
       folders: []
     - name: SD
       files:
-        - path: ../Lwip_nosys/User/sdio/bsp_sdio_sd.c
-        - path: ../Lwip_nosys/User/sdio/bsp_sdio_sd.h
-        - path: ../Lwip_nosys/User/sdio/sdio_test.c
-        - path: ../Lwip_nosys/User/sdio/sdio_test.h
+        - path: ../Lwip_nosys/User/sdio/sdio_sdcard.c
+        - path: ../Lwip_nosys/User/sdio/sdio_utils.c
       folders: []
 dependenceList: []
 outDir: build
@@ -298,7 +296,6 @@ targets:
         - STM32F429xx
         - USE_STM32F429I_DISCO
       incList:
-        - .
         - ../Lwip_nosys/Libraries/CMSIS/Include
         - ../Lwip_nosys/Libraries/CMSIS/Device/ST/STM32F4xx/Include
         - ../Lwip_nosys/Libraries/STM32F4xx_HAL_Driver/Inc

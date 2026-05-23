@@ -1,141 +1,76 @@
 /**
   *********************************************************************
   * @file    main.c
-  * @author  fire
-  * @version V1.0
-  * @date    2019-xx-xx
-  * @brief   FreeRTOS V9.0.0 + STM32 LwIP
+  * @brief   FreeRTOS + LwIP + 正点原子阿波罗 SD 卡测试
   *********************************************************************
-  * @attention
-  *
-  * 实验平台:野火  STM32全系列开发板 
-  * 论坛    :http://www.firebbs.cn
-  * 淘宝    :https://fire-stm32.taobao.com
-  *
-  **********************************************************************
-  */ 
- 
-/*
-*************************************************************************
-*                             包含的头文件
-*************************************************************************
-*/ 
+  */
+
 #include "main.h"
-/* FreeRTOS头文件 */
 #include "FreeRTOS.h"
 #include "task.h"
-#include "queue.h"
-#include "sdio/sdio_test.h"
+#include "sdio/sdio_utils.h"
 
-/**************************** 任务句柄 ********************************/
-/* 
- * 任务句柄是一个指针，用于指向一个任务，当任务创建好之后，它就具有了一个任务句柄
- * 以后我们要想操作这个任务都需要通过这个任务句柄，如果是自身的任务操作自己，那么
- * 这个句柄可以为NULL。
- */
-static TaskHandle_t AppTaskCreate_Handle = NULL;/* 创建任务句柄 */
-static TaskHandle_t SD_App_Task_Handle = NULL;/* SD卡轮询任务句柄 */
+static TaskHandle_t AppTaskCreate_Handle = NULL;
+static TaskHandle_t SD_App_Task_Handle = NULL;
 
-/********************************** 内核对象句柄 *********************************/
-/*
- * 信号量，消息队列，事件标志组，软件定时器这些都属于内核的对象，要想使用这些内核
- * 对象，必须先创建，创建成功之后会返回一个相应的句柄。实际上就是一个指针，后续我
- * 们就可以通过这个句柄操作这些内核对象。
- *
- * 内核对象说白了就是一种全局的数据结构，通过这些数据结构我们可以实现任务间的通信，
- * 任务间的事件同步等各种功能。至于这些功能的实现我们是通过调用这些内核对象的函数
- * 来完成的
- * 
- */
+#define SD_APP_TASK_PERIOD_MS   (10U * 1000U)
 
-/******************************* 全局变量声明 ************************************/
-/*
- * 当我们在写应用程序的时候，可能需要用到一些全局变量。
- */
-
-
-/******************************* 宏定义 ************************************/
-#define SD_APP_TASK_PERIOD_MS   (10U * 1000U)  /* 每 10 秒执行一次 SD_Test */
-
-/*
-*************************************************************************
-*                             函数声明
-*************************************************************************
-*/
-static void AppTaskCreate(void);/* 用于创建任务 */
-static void SD_App_Task(void* pvParameters);/* SD卡应用任务 */
+static void AppTaskCreate(void);
+static void SD_App_Task(void *pvParameters);
 static void WIFI_PDN_INIT(void);
 extern void TCPIP_Init(void);
 
-/*****************************************************************
-  * @brief  主函数
-  * @param  无
-  * @retval 无
-  * @note   第一步：开发板硬件初始化 
-            第二步：创建APP应用任务
-            第三步：启动FreeRTOS，开始多任务调度
-  ****************************************************************/
 int main(void)
-{	
-  BaseType_t xReturn = pdPASS;/* 定义一个创建信息返回值，默认为pdPASS */
-  
-  /* 开发板硬件初始化 */
+{
+  BaseType_t xReturn = pdPASS;
+
   BSP_Init();
-  /* 创建AppTaskCreate任务 */
-  xReturn = xTaskCreate((TaskFunction_t )AppTaskCreate,  /* 任务入口函数 */
-                        (const char*    )"AppTaskCreate",/* 任务名字 */
-                        (uint16_t       )512,  /* 任务栈大小 */
-                        (void*          )NULL,/* 任务入口函数参数 */
-                        (UBaseType_t    )1, /* 任务的优先级 */
-                        (TaskHandle_t*  )&AppTaskCreate_Handle);/* 任务控制块指针 */ 
-  /* 启动任务调度 */           
-  if(pdPASS == xReturn)
-    vTaskStartScheduler();   /* 启动任务，开启调度 */
+
+  xReturn = xTaskCreate((TaskFunction_t)AppTaskCreate,
+                        (const char *)"AppTaskCreate",
+                        (uint16_t)512,
+                        (void *)NULL,
+                        (UBaseType_t)1,
+                        (TaskHandle_t *)&AppTaskCreate_Handle);
+
+  if (pdPASS == xReturn)
+  {
+    vTaskStartScheduler();
+  }
   else
-    return -1;  
-  
-  while(1);   /* 正常不会执行到这里 */    
+  {
+    return -1;
+  }
+
+  while (1)
+  {
+  }
 }
 
-
-/***********************************************************************
-  * @ 函数名  ： AppTaskCreate
-  * @ 功能说明： 为了方便管理，所有的任务创建函数都放在这个函数里面
-  * @ 参数    ： 无  
-  * @ 返回值  ： 无
-  **********************************************************************/
 static void AppTaskCreate(void)
 {
-  BaseType_t xReturn = pdPASS;/* 定义一个创建信息返回值，默认为pdPASS */
+  BaseType_t xReturn = pdPASS;
+
   TCPIP_Init();
   socketudp_init();
-  taskENTER_CRITICAL();           //进入临界区
+  taskENTER_CRITICAL();
 
-  /* 创建SD_App_Task任务 */
-  xReturn = xTaskCreate((TaskFunction_t )SD_App_Task,
-                        (const char*    )"SD_App_Task",
-                        (uint16_t       )1024,
-                        (void*          )NULL,
-                        (UBaseType_t    )2,
-                        (TaskHandle_t*  )&SD_App_Task_Handle);
-  if(pdPASS == xReturn)
-    ;
-  
-  vTaskDelete(AppTaskCreate_Handle); //删除AppTaskCreate任务
-  
-  taskEXIT_CRITICAL();            //退出临界区
+  xReturn = xTaskCreate((TaskFunction_t)SD_App_Task,
+                        (const char *)"SD_App_Task",
+                        (uint16_t)2048,
+                        (void *)NULL,
+                        (UBaseType_t)2,
+                        (TaskHandle_t *)&SD_App_Task_Handle);
+  (void)xReturn;
+
+  vTaskDelete(AppTaskCreate_Handle);
+  taskEXIT_CRITICAL();
 }
 
-
-
-/**
-  **************************************************************
-  * @brief  初始化WiFi模块使能引脚，并禁用WiFi模块
-  **************************************************************
-  */
 static void WIFI_PDN_INIT(void)
 {
   GPIO_InitTypeDef GPIO_InitStruct;
+
   __HAL_RCC_GPIOB_CLK_ENABLE();
   GPIO_InitStruct.Pin = GPIO_PIN_13;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
@@ -145,11 +80,11 @@ static void WIFI_PDN_INIT(void)
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
 }
 
-/**********************************************************************
-  * @ 函数名  ： SD_App_Task
-  * @ 功能说明： 每 10 秒轮询执行一次 SD_Test
-  ********************************************************************/
-static void SD_App_Task(void* parameter)
+/**
+ * 对应正点原子实验39：Init 循环 -> 卡信息 -> 读写测试（无 LED/LCD/串口/KEY）
+ * 调试 Watch：g_sdio_utils
+ */
+static void SD_App_Task(void *parameter)
 {
   (void)parameter;
 
@@ -157,9 +92,7 @@ static void SD_App_Task(void* parameter)
 
   for (;;)
   {
-    SD_Test();
+    SDIO_Utils_RunOnce();
     vTaskDelay(pdMS_TO_TICKS(SD_APP_TASK_PERIOD_MS));
   }
 }
-
-/********************************END OF FILE****************************/
