@@ -1,13 +1,14 @@
-# 无 compile_commands.json 时供 clangd 解析/跳转（与 .eide/eide.yml 中 incList、defineList 对齐）
+# 优先使用 Lwip_nosys_eied 工程编译生成的 compile_commands.json
 CompileFlags:
+  CompilationDatabase: ../Lwip_nosys_eied/build/build_template
   Add:
     - -std=c11
-    - --target=thumbv7em-none-eabi
     - -DUSE_HAL_DRIVER
     - -DSTM32F429xx
     - -DUSE_STM32F429I_DISCO
     - -IUser
     - -IUser/arch
+    - -IUser/sdio
     - -ILibraries/CMSIS/Include
     - -ILibraries/CMSIS/Device/ST/STM32F4xx/Include
     - -ILibraries/STM32F4xx_HAL_Driver/Inc
@@ -17,14 +18,11 @@ CompileFlags:
     - -ICJSON
     - -IMqtt
     - -IProject/RTE/_build_template
-    - -IUser/sdio
     - -I../Lwip_nosys_eied/.cmsis/include
 
-# 嵌入式工程无 compile_commands 时误报多：保留索引/跳转，关闭波浪线诊断
 Diagnostics:
   UnusedIncludes: None
   MissingIncludes: None
   Suppress: ['*']
   ClangTidy:
-    Add: []
     Remove: ['*']

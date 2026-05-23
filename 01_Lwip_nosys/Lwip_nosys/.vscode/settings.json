@@ -1,0 +1,8 @@
+{
+    "clangd.arguments": [
+        "--header-insertion=never",
+        "--clang-tidy=0",
+        "--compile-commands-dir=${workspaceFolder}/../Lwip_nosys_eied/build/build_template",
+        "--query-driver=**/armcc.exe;**/armclang.exe;**/armasm.exe;**/arm-none-eabi-gcc.exe"
+    ]
+}

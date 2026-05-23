@@ -10,8 +10,15 @@
             "--header-insertion=never"
         ],
         "files.autoGuessEncoding": true,
-        "C_Cpp.default.configurationProvider": "cl.eide",
+        "C_Cpp.intelliSenseEngine": "disabled",
         "C_Cpp.errorSquiggles": "disabled",
+        "clangd.detectExtensionConflicts": true,
+        "clangd.arguments": [
+            "--header-insertion=never",
+            "--clang-tidy=0",
+            "--compile-commands-dir=${workspaceFolder}/build/build_template",
+            "--query-driver=**/armcc.exe;**/armclang.exe;**/armasm.exe;**/arm-none-eabi-gcc.exe"
+        ],
         "files.associations": {
             ".eideignore": "ignore",
             "*.a51": "a51",
@@ -32,6 +39,7 @@
     },
     "extensions": {
         "recommendations": [
+            "llvm-vs-code-extensions.vscode-clangd",
             "cl.eide",
             "keroc.hex-fmt",
             "xiaoyongdong.srecord",

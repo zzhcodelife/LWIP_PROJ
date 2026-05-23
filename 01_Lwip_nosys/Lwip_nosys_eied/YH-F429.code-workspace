@@ -1,17 +1,21 @@
 {
     "folders": [
         {
+            "name": "Lwip_nosys_eied",
             "path": "."
         },
         {
+            "name": "Lwip_nosys",
             "path": "../Lwip_nosys"
         }
     ],
     "settings": {
         "terminal.integrated.shellIntegration.enabled": false,
+        "clangd.detectExtensionConflicts": true,
         "clangd.arguments": [
             "--header-insertion=never",
-            "--clang-tidy=0"
+            "--clang-tidy=0",
+            "--query-driver=**/armcc.exe;**/armclang.exe;**/armasm.exe;**/arm-none-eabi-gcc.exe"
         ],
         "clangd.showUnusedSymbolDiagnostics": false,
         "clangd.showChangeOfIncludeDiagnostics": false,
