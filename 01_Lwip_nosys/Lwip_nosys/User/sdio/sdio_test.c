@@ -36,7 +36,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "sdio/bsp_sdio_sd.h"
-#include "usart/bsp_debug_usart.h"
+//#include "usart/bsp_debug_usart.h"
 #include "sdio/sdio_test.h"
 /** @addtogroup STM32F4xx_HAL_Examples
   * @{
@@ -77,11 +77,11 @@ void SD_Test(void)
   
   if(SD_state != MSD_OK)
   {
-    printf("SD Initialization : FAIL.\r\n");	
+//    printf("SD Initialization : FAIL.\r\n");
   }		
    else
    {
-    printf("SD Initialization :  OK.\r\n");		
+//    printf("SD Initialization :  OK.\r\n");
 
     SD_state = BSP_SD_Erase(BLOCK_START_ADDR, NUM_OF_BLOCKS);
     /* Wait until SD cards are ready to use for new operation */
@@ -90,11 +90,11 @@ void SD_Test(void)
     }
     if(SD_state != MSD_OK)
     {
-       printf("SD ERASE : FAILED.\r\n");  
+//       printf("SD ERASE : FAILED.\r\n");
     }
     else
     {
-       printf("SD ERASE : OK.\r\n"); 
+//       printf("SD ERASE : OK.\r\n");
       /* Fill the buffer to write */
       Fill_Buffer(aTxBuffer, BUFFER_WORDS_SIZE, 0x22FF);
       SD_state = BSP_SD_WriteBlocks_DMA(aTxBuffer, BLOCK_START_ADDR, NUM_OF_BLOCKS);
@@ -104,11 +104,11 @@ void SD_Test(void)
       }                               
       if(SD_state != MSD_OK)
       {
-        printf("SD WRITE : FAILED.\r\n");
+//        printf("SD WRITE : FAILED.\r\n");
       }
       else
       {
-        printf("SD WRITE : OK.\r\n");
+//        printf("SD WRITE : OK.\r\n");
         SD_state = BSP_SD_ReadBlocks_DMA(aRxBuffer, BLOCK_START_ADDR, NUM_OF_BLOCKS);
         /* Wait until SD cards are ready to use for new operation */
         while((BSP_SD_GetCardState() != SD_TRANSFER_OK))
@@ -116,18 +116,18 @@ void SD_Test(void)
         }
         if(SD_state != MSD_OK)
         {
-          printf("SD READ  : FAILED.\r\n");
+//          printf("SD READ  : FAILED.\r\n");
         }
         else
         {
-          printf("SD READ  : OK.\r\n");
+//          printf("SD READ  : OK.\r\n");
           if(Buffercmp(aTxBuffer, aRxBuffer, BUFFER_WORDS_SIZE) > 0)
           {
-            printf("SD COMPARE  : FAILED.\r\n");
+//            printf("SD COMPARE  : FAILED.\r\n");
           }
           else
           {
-            printf("SD COMPARE  : OK.\r\n");
+//            printf("SD COMPARE  : OK.\r\n");
           }
         }
       }

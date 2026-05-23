@@ -279,6 +279,13 @@ virtualFolder:
         - path: ../Lwip_nosys/CJSON/cJSON_Utils.c
         - path: ../Lwip_nosys/CJSON/cJSON_Utils.h
       folders: []
+    - name: SD
+      files:
+        - path: ../Lwip_nosys/User/sdio/bsp_sdio_sd.c
+        - path: ../Lwip_nosys/User/sdio/bsp_sdio_sd.h
+        - path: ../Lwip_nosys/User/sdio/sdio_test.c
+        - path: ../Lwip_nosys/User/sdio/sdio_test.h
+      folders: []
 dependenceList: []
 outDir: build
 miscInfo:
