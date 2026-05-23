@@ -1,4 +1,9 @@
 {
+    "scm.diffDecorations": "none",
+    "git.decorations.enabled": false,
+    "git.openDiffOnClick": true,
+    "explorer.decorations.badges": false,
+    "explorer.decorations.colors": false,
     "clangd.arguments": [
         "--header-insertion=never",
         "--clang-tidy=0",

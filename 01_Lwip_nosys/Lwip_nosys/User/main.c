@@ -25,6 +25,10 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
+#include "sdio/sdio_test.h"
+/* 野火 BSP（需将 led/key/usart 驱动加入工程） */
+#include "led/bsp_led.h"
+#include "key/bsp_key.h"
 
 /**************************** 任务句柄 ********************************/
 /* 
@@ -33,8 +37,7 @@
  * 这个句柄可以为NULL。
  */
 static TaskHandle_t AppTaskCreate_Handle = NULL;/* 创建任务句柄 */
-static TaskHandle_t Test1_Task_Handle = NULL;/* LED任务句柄 */
-static TaskHandle_t Test2_Task_Handle = NULL;/* KEY任务句柄 */
+static TaskHandle_t SD_App_Task_Handle = NULL;/* SD卡/按键任务句柄 */
 
 /********************************** 内核对象句柄 *********************************/
 /*
@@ -66,10 +69,8 @@ static TaskHandle_t Test2_Task_Handle = NULL;/* KEY任务句柄 */
 *************************************************************************
 */
 static void AppTaskCreate(void);/* 用于创建任务 */
-
-static void Test1_Task(void* pvParameters);/* Test1_Task任务实现 */
-static void Test2_Task(void* pvParameters);/* Test2_Task任务实现 */
-
+static void SD_App_Task(void* pvParameters);/* SD卡应用任务 */
+static void WIFI_PDN_INIT(void);
 extern void TCPIP_Init(void);
 
 /*****************************************************************
@@ -86,11 +87,6 @@ int main(void)
   
   /* 开发板硬件初始化 */
   BSP_Init();
-  
-  
-  
-//  tcpecho_init();
-  
   /* 创建AppTaskCreate任务 */
   xReturn = xTaskCreate((TaskFunction_t )AppTaskCreate,  /* 任务入口函数 */
                         (const char*    )"AppTaskCreate",/* 任务名字 */
@@ -118,33 +114,18 @@ static void AppTaskCreate(void)
 {
   BaseType_t xReturn = pdPASS;/* 定义一个创建信息返回值，默认为pdPASS */
   TCPIP_Init();
-  //client_init();
-  //tcpecho_init();
-  //udpecho_init();
-  //socket_client_init();
-  //socketserver_init();
   socketudp_init();
   taskENTER_CRITICAL();           //进入临界区
 
-  /* 创建Test1_Task任务 */
-  xReturn = xTaskCreate((TaskFunction_t )Test1_Task, /* 任务入口函数 */
-                        (const char*    )"Test1_Task",/* 任务名字 */
-                        (uint16_t       )512,   /* 任务栈大小 */
-                        (void*          )NULL,	/* 任务入口函数参数 */
-                        (UBaseType_t    )1,	    /* 任务的优先级 */
-                        (TaskHandle_t*  )&Test1_Task_Handle);/* 任务控制块指针 */
+  /* 创建SD_App_Task任务 */
+  xReturn = xTaskCreate((TaskFunction_t )SD_App_Task,
+                        (const char*    )"SD_App_Task",
+                        (uint16_t       )1024,
+                        (void*          )NULL,
+                        (UBaseType_t    )2,
+                        (TaskHandle_t*  )&SD_App_Task_Handle);
   if(pdPASS == xReturn)
-    //printf("Create Test1_Task sucess...\r\n");
-  
-  /* 创建Test2_Task任务 */
-  xReturn = xTaskCreate((TaskFunction_t )Test2_Task,  /* 任务入口函数 */
-                        (const char*    )"Test2_Task",/* 任务名字 */
-                        (uint16_t       )512,  /* 任务栈大小 */
-                        (void*          )NULL,/* 任务入口函数参数 */
-                        (UBaseType_t    )2, /* 任务的优先级 */
-                        (TaskHandle_t*  )&Test2_Task_Handle);/* 任务控制块指针 */ 
-  if(pdPASS == xReturn)
-//    printf("Create Test2_Task sucess...\n\n");
+    ;
   
   vTaskDelete(AppTaskCreate_Handle); //删除AppTaskCreate任务
   
@@ -153,178 +134,36 @@ static void AppTaskCreate(void)
 
 
 
-/**********************************************************************
-  * @ 函数名  ： Test1_Task
-  * @ 功能说明： Test1_Task任务主体
-  * @ 参数    ：   
-  * @ 返回值  ： 无
-  ********************************************************************/
-static void Test1_Task(void* parameter)
-{	
-  while (1)
-  {
-//    PRINT_DEBUG("LED1_TOGGLE\n");
-    vTaskDelay(1000);/* 延时1000个tick */
-  }
+/**
+  **************************************************************
+  * @brief  初始化WiFi模块使能引脚，并禁用WiFi模块
+  **************************************************************
+  */
+static void WIFI_PDN_INIT(void)
+{
+  GPIO_InitTypeDef GPIO_InitStruct;
+  __HAL_RCC_GPIOB_CLK_ENABLE();
+  GPIO_InitStruct.Pin = GPIO_PIN_13;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FAST;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
 }
 
 /**********************************************************************
-  * @ 函数名  ： Test2_Task
-  * @ 功能说明： Test2_Task任务主体
-  * @ 参数    ：   
-  * @ 返回值  ： 无
+  * @ 函数名  ： SD_App_Task
+  * @ 功能说明： SD卡测试、按键检测（原 main 中 while 循环逻辑）
   ********************************************************************/
-static void Test2_Task(void* parameter)
-{	 
-  while (1)
+static void SD_App_Task(void* parameter)
+{
+  (void)parameter;
+  WIFI_PDN_INIT();
+  for (;;)
   {
-//    PRINT_DEBUG("LED2_TOGGLE\n");
-    vTaskDelay(2000);/* 延时2000个tick */
+    SD_Test();
+    vTaskDelay(pdMS_TO_TICKS(20));
   }
 }
-
-
 
 /********************************END OF FILE****************************/
-
-/**
-	**************************************************************
-	* Description : 初始化WiFi模块使能引脚，并禁用WiFi模块
-	* Argument(s) : none.
-	* Return(s)   : none.
-	**************************************************************
-	*/
-  static void WIFI_PDN_INIT(void)
-  {
-    /*定义一个GPIO_InitTypeDef类型的结构体*/
-    GPIO_InitTypeDef GPIO_InitStruct;
-    /*使能引脚时钟*/	
-    __HAL_RCC_GPIOB_CLK_ENABLE();
-    /*选择要控制的GPIO引脚*/															   
-    GPIO_InitStruct.Pin = GPIO_PIN_13;	
-    /*设置引脚的输出类型为推挽输出*/
-    GPIO_InitStruct.Mode  = GPIO_MODE_OUTPUT_PP;      
-    /*设置引脚为上拉模式*/
-    GPIO_InitStruct.Pull  = GPIO_PULLUP;
-    /*设置引脚速率为高速 */   
-    GPIO_InitStruct.Speed = GPIO_SPEED_FAST; 
-    /*调用库函数，使用上面配置的GPIO_InitStructure初始化GPIO*/
-    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);	
-    /*禁用WiFi模块*/
-    HAL_GPIO_WritePin(GPIOB,GPIO_PIN_13,GPIO_PIN_RESET);  
-  }
-  
-  /**
-    * @brief  主函数
-    * @param  无
-    * @retval 无
-    */
-  int main(void)
-  {	
-    /* 配置系统时钟为216 MHz */
-     SystemClock_Config();
-    /*禁用WiFi模块*/
-    WIFI_PDN_INIT();
-    
-    /* 初始化LED灯 */
-     LED_GPIO_Config();
-    LED_BLUE;	
-    /* 初始化独立按键 */
-    Key_GPIO_Config();
-    
-    /*初始化USART1*/
-    DEBUG_USART_Config();
-    
-//    printf("\r\n欢迎使用野火  STM32 F429 开发板。\r\n");
-    
-//    printf("在开始进行SD卡基本测试前，请给开发板插入32G以内的SD卡\r\n");
-//    printf("本程序会对SD卡进行 非文件系统 方式读写，会删除SD卡的文件系统\r\n");
-//    printf("实验后可通过电脑格式化或使用SD卡文件系统的例程恢复SD卡文件系统\r\n");
-//    printf("\r\n 但sd卡内的原文件不可恢复，实验前务必备份SD卡内的原文件！！！\r\n");
-    
-//    printf("\r\n 若已确认，请按开发板的KEY1按键，开始SD卡测试实验....\r\n");
-    
-    /* Infinite loop */
-    while (1)
-    {	
-      /*按下按键开始进行SD卡读写实验，会损坏SD卡原文件*/
-      if(	Key_Scan(KEY1_GPIO_PORT,KEY1_PIN) == KEY_ON)
-      {
-//        printf("\r\n开始进行SD卡读写实验\r\n");
-        SD_Test();			
-      }
-    } 
-  }
-  
-  /**
-    * @brief  系统时钟配置 
-    *            System Clock source            = PLL (HSE)
-    *            SYSCLK(Hz)                     = 180000000
-    *            HCLK(Hz)                       = 180000000
-    *            AHB Prescaler                  = 1
-    *            APB1 Prescaler                 = 4
-    *            APB2 Prescaler                 = 2
-    *            HSE Frequency(Hz)              = 12000000
-    *            PLL_M                          = 25
-    *            PLL_N                          = 360
-    *            PLL_P                          = 2
-    *            PLL_Q                          = 4
-    *            VDD(V)                         = 3.3
-    *            Main regulator output voltage  = Scale1 mode
-    *            Flash Latency(WS)              = 5
-    * @param  无
-    * @retval 无
-    */
-  static void SystemClock_Config(void)
-  {
-    RCC_ClkInitTypeDef RCC_ClkInitStruct;
-    RCC_OscInitTypeDef RCC_OscInitStruct;
-    HAL_StatusTypeDef ret = HAL_OK;
-    
-     /* 使能HSE，配置HSE为PLL的时钟源，配置PLL的各种分频因子M N P Q 
-      * PLLCLK = HSE/M*N/P = 12M / 25 *360 / 2 = 180M
-      */
-    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
-    RCC_OscInitStruct.HSEState = RCC_HSE_ON;
-    RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-    RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-    RCC_OscInitStruct.PLL.PLLM = 25;
-    RCC_OscInitStruct.PLL.PLLN = 360;
-    RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-    RCC_OscInitStruct.PLL.PLLQ = 4;
-    ret = HAL_RCC_OscConfig(&RCC_OscInitStruct);
-    
-    if( ret != HAL_OK)
-    {
-      while(1) {}
-    }
-  
-    /* 激活 OverDrive 模式以达到180M频率 */
-    ret =HAL_PWREx_EnableOverDrive();
-     if( ret != HAL_OK)
-    {
-      while(1) {}
-    }
-   
-    /* 选择PLLCLK作为SYSCLK，并配置 HCLK, PCLK1 and PCLK2 的时钟分频因子 
-     * SYSCLK = PLLCLK     = 180M
-     * HCLK   = SYSCLK / 1 = 180M
-     * PCLK2  = SYSCLK / 2 = 90M
-     * PCLK1  = SYSCLK / 4 = 45M
-     */
-    RCC_ClkInitStruct.ClockType = (RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2);
-    RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-    RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-    RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;  
-    RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
-    
-    ret =HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_5);
-    
-     if( ret != HAL_OK)
-    {
-      while(1) {}
-    }
-  }
-  
-  
-  /*********************************************END OF FILE**********************/

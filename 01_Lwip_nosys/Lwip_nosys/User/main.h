@@ -44,19 +44,8 @@
 #include "task.h"
 #include "queue.h"
 #include "semphr.h"
-//#include "client.h"
-//#include "tcpecho.h"
-//#include "udpecho.h"
-//#include "socketclient.h"
-//#include "socketserver.h"
 #include "socketudp.h"
 void BSP_Init(void);
-
-/* Exported types ------------------------------------------------------------*/
-/* Exported constants --------------------------------------------------------*/
-/* Exported macro ------------------------------------------------------------*/
-/* Exported functions ------------------------------------------------------- */
-
 #endif /* __MAIN_H */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
