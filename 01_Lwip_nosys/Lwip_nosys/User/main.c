@@ -21,10 +21,14 @@
 *************************************************************************
 */ 
 #include "main.h"
+#include "sdio/sdio_sdcard.h"
+#include "sdio/sdio_utils.h"
 /* FreeRTOS头文件 */
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
+
+volatile SD_MainDbg_t g_sd_main;
 
 /**************************** 任务句柄 ********************************/
 /* 
@@ -139,12 +143,57 @@ static void AppTaskCreate(void)
   * @ 返回值  ： 无
   ********************************************************************/
 static void Test1_Task(void* parameter)
-{	
-  while (1)
-  {
-//    PRINT_DEBUG("LED1_TOGGLE\n");
-    vTaskDelay(1000);/* 延时1000个tick */
-  }
+{
+    uint8_t err;
+    uint32_t i;
+    uint8_t *buf;
+
+    g_sd_main.init_retry_count = 0;
+    g_sd_main.init_ok = 0;
+    do
+    {
+        err = SD_Init();
+        g_sd_main.init_retry_count++;
+        g_sd_main.last_init_err = err;
+        if (err != 0)
+        {
+            vTaskDelay(pdMS_TO_TICKS(1000));
+        }
+    } while (err != 0);
+
+    g_sd_main.init_ok = 1;
+    show_sdcard_info();
+
+    while (1)
+    {
+        g_sd_main.loop_count++;
+        g_sd_main.read_sector = 0;
+
+        buf = (uint8_t *)pvPortMalloc(512U);
+        if (buf == NULL)
+        {
+            g_sd_main.malloc_fail = 1;
+            vTaskDelay(pdMS_TO_TICKS(5000));
+            continue;
+        }
+
+        g_sd_main.read_sta = SD_ReadDisk(buf, 0, 1);
+        if (g_sd_main.read_sta == 0)
+        {
+            g_sd_main.read_ok = 1;
+            for (g_sd_main.read_byte_sum = 0, i = 0; i < 512U; i++)
+            {
+                g_sd_main.read_byte_sum += buf[i];
+            }
+        }
+        else
+        {
+            g_sd_main.read_ok = 0;
+        }
+
+        vPortFree(buf);
+        vTaskDelay(pdMS_TO_TICKS(5000));
+    }
 }
 
 /********************************END OF FILE****************************/

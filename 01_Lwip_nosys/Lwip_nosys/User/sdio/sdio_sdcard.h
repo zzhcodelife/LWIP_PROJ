@@ -11,7 +11,7 @@
 /* 正点原子示例里的卡类型判断（与 HAL CardType 数值兼容） */
 #define STD_CAPACITY_SD_CARD_V1_1  CARD_SDSC
 #define STD_CAPACITY_SD_CARD_V2_0  1U
-#define HIGH_CAPACITY_SD_CARD      CARD_SDHC_SDXC
+#define HIGH_CAPACITY_SD_CARD      2U
 #define MULTIMEDIA_CARD            CARD_SECURED
 
 extern SD_HandleTypeDef       SDCARD_Handler;
