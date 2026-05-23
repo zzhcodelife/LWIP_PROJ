@@ -30,7 +30,7 @@ void BSP_Init(void)
 }
 
 /**
-  * @brief  System Clock Configuration（野火 F429：HSE 12MHz → SYSCLK 180MHz）
+  * @brief  System Clock Configuration（正点原子阿波罗 F429：HSE 12MHz → SYSCLK 180MHz）
   *         PLLCLK = HSE / M * N / P = 12M / 25 * 360 / 2 = 180M
   */
 static void SystemClock_Config(void)

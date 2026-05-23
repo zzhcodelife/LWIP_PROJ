@@ -78,6 +78,31 @@
 #define   MSD_OK         0x00
 #define   MSD_ERROR      0x01
 
+/* 目标板：正点原子 阿波罗 STM32F429IGT6（SDIO 与 F429I-Discovery 同组引脚） */
+#define BSP_SD_BOARD_ALIENTEK_APOLLO_F429   1
+
+#if BSP_SD_BOARD_ALIENTEK_APOLLO_F429
+/* 阿波罗板载 TF 为 4 线 SDIO：PC8~11=DAT0~3, PC12=CLK, PD2=CMD, PA8=CD */
+#define BSP_SD_USE_4BIT_BUS           1
+#define BSP_SD_USE_HW_FLOW_CTRL       0
+#define BSP_SD_CLKDIV_TRANS           ((uint8_t)4U)
+#define BSP_SD_CD_GPIO_PORT           GPIOA
+#define BSP_SD_CD_GPIO_PIN            GPIO_PIN_8
+#define BSP_SD_CD_INSERTED_LEVEL      GPIO_PIN_RESET
+#else
+#define BSP_SD_USE_4BIT_BUS           0
+#define BSP_SD_USE_HW_FLOW_CTRL       0
+#define BSP_SD_CLKDIV_TRANS           ((uint8_t)16U)
+#endif
+
+/* SDIO 引脚（阿波罗 / Discovery 相同） */
+#define BSP_SD_1BIT_GPIO_PORT_CLK    GPIOC
+#define BSP_SD_1BIT_GPIO_PIN_CLK     GPIO_PIN_12
+#define BSP_SD_1BIT_GPIO_PORT_CMD    GPIOD
+#define BSP_SD_1BIT_GPIO_PIN_CMD     GPIO_PIN_2
+#define BSP_SD_1BIT_GPIO_PORT_D0     GPIOC
+#define BSP_SD_1BIT_GPIO_PIN_D0      GPIO_PIN_8
+
 /** 
   * @brief  SD transfer state definition  
   */     
@@ -122,6 +147,11 @@ uint8_t BSP_SD_Erase(uint32_t StartAddr, uint32_t EndAddr);
 uint8_t BSP_SD_GetCardState(void);
 void    BSP_SD_GetCardInfo(HAL_SD_CardInfoTypeDef *CardInfo);
 uint8_t BSP_SD_IsDetected(void);
+
+extern SD_HandleTypeDef uSdHandle;
+
+void BSP_SD_ApplyTransferClock(void);
+uint8_t BSP_SD_PrepForTransfer(void);
 
 /* These functions can be modified in case the current settings (e.g. DMA stream)
    need to be changed for specific application needs */

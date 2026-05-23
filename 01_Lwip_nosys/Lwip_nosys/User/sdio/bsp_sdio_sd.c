@@ -80,6 +80,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "bsp_sdio_sd.h"
+#include "stm32f4xx_hal_sd.h"
 
 
 /** @addtogroup BSP
@@ -99,6 +100,10 @@
   */
 SD_HandleTypeDef uSdHandle;
 
+static DMA_HandleTypeDef s_sdDmaRxHandle;
+static DMA_HandleTypeDef s_sdDmaTxHandle;
+static uint8_t s_sdMspInited = 0U;
+
 /**
   * @}
   */ 
@@ -106,6 +111,34 @@ SD_HandleTypeDef uSdHandle;
 /** @defgroup STM324x9I_EVAL_SD_Private_Functions SD Private Functions
   * @{
   */
+
+void BSP_SD_ApplyTransferClock(void)
+{
+  uSdHandle.Init.ClockDiv = BSP_SD_CLKDIV_TRANS;
+  SDIO_Init(uSdHandle.Instance, uSdHandle.Init);
+}
+
+uint8_t BSP_SD_PrepForTransfer(void)
+{
+  uint32_t tick = HAL_GetTick();
+
+  BSP_SD_ApplyTransferClock();
+
+  if (uSdHandle.State != HAL_SD_STATE_READY)
+  {
+    (void)HAL_SD_Abort(&uSdHandle);
+    uSdHandle.State = HAL_SD_STATE_READY;
+  }
+
+  while (BSP_SD_GetCardState() != SD_TRANSFER_OK)
+  {
+    if ((HAL_GetTick() - tick) > 2000U)
+    {
+      return MSD_ERROR;
+    }
+  }
+  return MSD_OK;
+}
 
 /**
   * @brief  Initializes the SD card device.
@@ -115,78 +148,80 @@ uint8_t BSP_SD_Init(void)
 { 
   uint8_t SD_state = MSD_OK;
   
-  /* uSD device interface configuration */
-  uSdHandle.Instance = SDIO;
+  /* 已初始化且就绪时只刷新时钟，避免每轮 DeInit 把 DMA 句柄弄丢 */
+  if (uSdHandle.State == HAL_SD_STATE_READY)
+  {
+    BSP_SD_ApplyTransferClock();
+    return MSD_OK;
+  }
 
+  if (uSdHandle.State != HAL_SD_STATE_RESET)
+  {
+    s_sdMspInited = 0U;
+    (void)HAL_SD_DeInit(&uSdHandle);
+  }
+
+#if BSP_SD_BOARD_ALIENTEK_APOLLO_F429
+  if (BSP_SD_IsDetected() != SD_PRESENT)
+  {
+    return MSD_ERROR;
+  }
+#endif
+
+  uSdHandle.Instance = SDIO;
   uSdHandle.Init.ClockEdge           = SDIO_CLOCK_EDGE_RISING;
   uSdHandle.Init.ClockBypass         = SDIO_CLOCK_BYPASS_DISABLE;
   uSdHandle.Init.ClockPowerSave      = SDIO_CLOCK_POWER_SAVE_DISABLE;
   uSdHandle.Init.BusWide             = SDIO_BUS_WIDE_1B;
+#if BSP_SD_USE_HW_FLOW_CTRL
+  uSdHandle.Init.HardwareFlowControl = SDIO_HARDWARE_FLOW_CONTROL_ENABLE;
+#else
   uSdHandle.Init.HardwareFlowControl = SDIO_HARDWARE_FLOW_CONTROL_DISABLE;
-  uSdHandle.Init.ClockDiv            = SDIO_TRANSFER_CLK_DIV;
-  
-//  /* Configure IO functionalities for SD detect pin */
-//  BSP_IO_Init(); 
-//  
-//  /* Check if the SD card is plugged in the slot */
-//  if(BSP_SD_IsDetected() != SD_PRESENT)
-//  {
-//    return MSD_ERROR;
-//  }
-  
-  /* Msp SD initialization */
-  BSP_SD_MspInit(&uSdHandle, NULL);
-  
-  if(HAL_SD_Init(&uSdHandle) != HAL_OK)
+#endif
+  uSdHandle.Init.ClockDiv            = BSP_SD_CLKDIV_TRANS;
+
+  if (HAL_SD_Init(&uSdHandle) != HAL_OK)
   {
     SD_state = MSD_ERROR;
   }
-  
-  /* Configure SD Bus width */
-  if(SD_state == MSD_OK)
+  else
   {
-    /* Enable wide operation */
-    if(HAL_SD_ConfigWideBusOperation(&uSdHandle, SDIO_BUS_WIDE_4B) != HAL_OK)
+    BSP_SD_ApplyTransferClock();
+  }
+  
+#if BSP_SD_USE_4BIT_BUS
+  if (SD_state == MSD_OK)
+  {
+    if (HAL_SD_ConfigWideBusOperation(&uSdHandle, SDIO_BUS_WIDE_4B) != HAL_OK)
     {
-      SD_state = MSD_ERROR;
+      /* 4 线切换失败时退回 1 线，避免完全不可用 */
+      uSdHandle.Init.BusWide = SDIO_BUS_WIDE_1B;
+      BSP_SD_ApplyTransferClock();
     }
     else
     {
-      SD_state = MSD_OK;
+      uSdHandle.Init.BusWide = SDIO_BUS_WIDE_4B;
+      BSP_SD_ApplyTransferClock();
     }
   }
-  
-  return  SD_state;
+#endif
+
+  return SD_state;
 }
 
-///**
-//  * @brief  Configures Interrupt mode for SD detection pin.
-//  * @retval Returns 0
-//  */
-//uint8_t BSP_SD_ITConfig(void)
-//{  
-//  /* Configure Interrupt mode for SD detection pin */  
-//  BSP_IO_ConfigPin(SD_DETECT_PIN, IO_MODE_IT_FALLING_EDGE);
-//  
-//  return 0;
-//}
-
-///**
-// * @brief  Detects if SD card is correctly plugged in the memory slot or not.
-// * @retval Returns if SD is detected or not
-// */
-//uint8_t BSP_SD_IsDetected(void)
-//{
-//  __IO uint8_t status = SD_PRESENT;
-//  
-//  /* Check SD card detect pin */
-//  if(BSP_IO_ReadPin(SD_DETECT_PIN))
-//  {
-//    status = SD_NOT_PRESENT;
-//  }
-//  
-//  return status;
-//}
+uint8_t BSP_SD_IsDetected(void)
+{
+#if BSP_SD_BOARD_ALIENTEK_APOLLO_F429
+  if (HAL_GPIO_ReadPin(BSP_SD_CD_GPIO_PORT, BSP_SD_CD_GPIO_PIN) ==
+      BSP_SD_CD_INSERTED_LEVEL)
+  {
+    return SD_PRESENT;
+  }
+  return SD_NOT_PRESENT;
+#else
+  return SD_PRESENT;
+#endif
+}
 
 ///** @brief  SD detect IT treatment.
 //  * @retval None
@@ -318,9 +353,14 @@ uint8_t BSP_SD_Erase(uint32_t StartAddr, uint32_t EndAddr)
   */
 __weak void BSP_SD_MspInit(SD_HandleTypeDef *hsd, void *Params)
 {
-  static DMA_HandleTypeDef dmaRxHandle;
-  static DMA_HandleTypeDef dmaTxHandle;
   GPIO_InitTypeDef GPIO_Init_Structure;
+
+  if (s_sdMspInited != 0U)
+  {
+    __HAL_LINKDMA(hsd, hdmarx, s_sdDmaRxHandle);
+    __HAL_LINKDMA(hsd, hdmatx, s_sdDmaTxHandle);
+    return;
+  }
   
   /* Enable SDIO clock */
   __HAL_RCC_SDIO_CLK_ENABLE();
@@ -331,6 +371,17 @@ __weak void BSP_SD_MspInit(SD_HandleTypeDef *hsd, void *Params)
   /* Enable GPIOs clock */
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
+#if BSP_SD_BOARD_ALIENTEK_APOLLO_F429
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+  {
+    GPIO_InitTypeDef gpio_cd = {0};
+
+    gpio_cd.Pin  = BSP_SD_CD_GPIO_PIN;
+    gpio_cd.Mode = GPIO_MODE_INPUT;
+    gpio_cd.Pull = GPIO_PULLUP;
+    HAL_GPIO_Init(BSP_SD_CD_GPIO_PORT, &gpio_cd);
+  }
+#endif
   
   /* Common GPIO configuration */
   GPIO_Init_Structure.Mode      = GPIO_MODE_AF_PP;
@@ -338,76 +389,63 @@ __weak void BSP_SD_MspInit(SD_HandleTypeDef *hsd, void *Params)
   GPIO_Init_Structure.Speed     = GPIO_SPEED_HIGH;
   GPIO_Init_Structure.Alternate = GPIO_AF12_SDIO;
   
-  /* GPIOC configuration */
+#if (BSP_SD_USE_4BIT_BUS != 0)
   GPIO_Init_Structure.Pin = GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10 | GPIO_PIN_11 | GPIO_PIN_12;
-   
   HAL_GPIO_Init(GPIOC, &GPIO_Init_Structure);
+#else
+  GPIO_Init_Structure.Pin = BSP_SD_1BIT_GPIO_PIN_D0 | BSP_SD_1BIT_GPIO_PIN_CLK;
+  HAL_GPIO_Init(BSP_SD_1BIT_GPIO_PORT_D0, &GPIO_Init_Structure);
+#endif
 
-  /* GPIOD configuration */
-  GPIO_Init_Structure.Pin = GPIO_PIN_2;
-  HAL_GPIO_Init(GPIOD, &GPIO_Init_Structure);
+  GPIO_Init_Structure.Pin = BSP_SD_1BIT_GPIO_PIN_CMD;
+  HAL_GPIO_Init(BSP_SD_1BIT_GPIO_PORT_CMD, &GPIO_Init_Structure);
 
-  /* NVIC configuration for SDIO interrupts */
-  HAL_NVIC_SetPriority(SDIO_IRQn, 5, 0);
+  /* 优先级须 > configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY(5)，避免与 FreeRTOS 冲突 */
+  HAL_NVIC_SetPriority(SDIO_IRQn, 6, 0);
   HAL_NVIC_EnableIRQ(SDIO_IRQn);
     
   /* Configure DMA Rx parameters */
-  dmaRxHandle.Init.Channel             = SD_DMAx_Rx_CHANNEL;
-  dmaRxHandle.Init.Direction           = DMA_PERIPH_TO_MEMORY;
-  dmaRxHandle.Init.PeriphInc           = DMA_PINC_DISABLE;
-  dmaRxHandle.Init.MemInc              = DMA_MINC_ENABLE;
-  dmaRxHandle.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
-  dmaRxHandle.Init.MemDataAlignment    = DMA_MDATAALIGN_WORD;
-  dmaRxHandle.Init.Mode                = DMA_PFCTRL;
-  dmaRxHandle.Init.Priority            = DMA_PRIORITY_VERY_HIGH;
-  dmaRxHandle.Init.FIFOMode            = DMA_FIFOMODE_ENABLE;
-  dmaRxHandle.Init.FIFOThreshold       = DMA_FIFO_THRESHOLD_FULL;
-  dmaRxHandle.Init.MemBurst            = DMA_MBURST_INC4;
-  dmaRxHandle.Init.PeriphBurst         = DMA_PBURST_INC4;
-  
-  dmaRxHandle.Instance = SD_DMAx_Rx_STREAM;
-  
-  /* Associate the DMA handle */
-  __HAL_LINKDMA(hsd, hdmarx, dmaRxHandle);
-  
-  /* Deinitialize the stream for new transfer */
-  HAL_DMA_DeInit(&dmaRxHandle);
-  
-  /* Configure the DMA stream */
-  HAL_DMA_Init(&dmaRxHandle);
+  s_sdDmaRxHandle.Init.Channel             = SD_DMAx_Rx_CHANNEL;
+  s_sdDmaRxHandle.Init.Direction           = DMA_PERIPH_TO_MEMORY;
+  s_sdDmaRxHandle.Init.PeriphInc           = DMA_PINC_DISABLE;
+  s_sdDmaRxHandle.Init.MemInc              = DMA_MINC_ENABLE;
+  s_sdDmaRxHandle.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
+  s_sdDmaRxHandle.Init.MemDataAlignment    = DMA_MDATAALIGN_WORD;
+  s_sdDmaRxHandle.Init.Mode                = DMA_PFCTRL;
+  s_sdDmaRxHandle.Init.Priority            = DMA_PRIORITY_VERY_HIGH;
+  s_sdDmaRxHandle.Init.FIFOMode            = DMA_FIFOMODE_ENABLE;
+  s_sdDmaRxHandle.Init.FIFOThreshold       = DMA_FIFO_THRESHOLD_FULL;
+  s_sdDmaRxHandle.Init.MemBurst            = DMA_MBURST_INC4;
+  s_sdDmaRxHandle.Init.PeriphBurst         = DMA_PBURST_INC4;
+  s_sdDmaRxHandle.Instance                 = SD_DMAx_Rx_STREAM;
+  __HAL_LINKDMA(hsd, hdmarx, s_sdDmaRxHandle);
+  HAL_DMA_DeInit(&s_sdDmaRxHandle);
+  HAL_DMA_Init(&s_sdDmaRxHandle);
   
   /* Configure DMA Tx parameters */
-  dmaTxHandle.Init.Channel             = SD_DMAx_Tx_CHANNEL;
-  dmaTxHandle.Init.Direction           = DMA_MEMORY_TO_PERIPH;
-  dmaTxHandle.Init.PeriphInc           = DMA_PINC_DISABLE;
-  dmaTxHandle.Init.MemInc              = DMA_MINC_ENABLE;
-  dmaTxHandle.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
-  dmaTxHandle.Init.MemDataAlignment    = DMA_MDATAALIGN_WORD;
-  dmaTxHandle.Init.Mode                = DMA_PFCTRL;
-  dmaTxHandle.Init.Priority            = DMA_PRIORITY_VERY_HIGH;
-  dmaTxHandle.Init.FIFOMode            = DMA_FIFOMODE_ENABLE;
-  dmaTxHandle.Init.FIFOThreshold       = DMA_FIFO_THRESHOLD_FULL;
-  dmaTxHandle.Init.MemBurst            = DMA_MBURST_INC4;
-  dmaTxHandle.Init.PeriphBurst         = DMA_PBURST_INC4;
+  s_sdDmaTxHandle.Init.Channel             = SD_DMAx_Tx_CHANNEL;
+  s_sdDmaTxHandle.Init.Direction           = DMA_MEMORY_TO_PERIPH;
+  s_sdDmaTxHandle.Init.PeriphInc           = DMA_PINC_DISABLE;
+  s_sdDmaTxHandle.Init.MemInc              = DMA_MINC_ENABLE;
+  s_sdDmaTxHandle.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
+  s_sdDmaTxHandle.Init.MemDataAlignment    = DMA_MDATAALIGN_WORD;
+  s_sdDmaTxHandle.Init.Mode                = DMA_PFCTRL;
+  s_sdDmaTxHandle.Init.Priority            = DMA_PRIORITY_VERY_HIGH;
+  s_sdDmaTxHandle.Init.FIFOMode            = DMA_FIFOMODE_ENABLE;
+  s_sdDmaTxHandle.Init.FIFOThreshold       = DMA_FIFO_THRESHOLD_FULL;
+  s_sdDmaTxHandle.Init.MemBurst            = DMA_MBURST_INC4;
+  s_sdDmaTxHandle.Init.PeriphBurst         = DMA_PBURST_INC4;
+  s_sdDmaTxHandle.Instance                 = SD_DMAx_Tx_STREAM;
+  __HAL_LINKDMA(hsd, hdmatx, s_sdDmaTxHandle);
+  HAL_DMA_DeInit(&s_sdDmaTxHandle);
+  HAL_DMA_Init(&s_sdDmaTxHandle);
   
-  dmaTxHandle.Instance = SD_DMAx_Tx_STREAM;
-  
-  /* Associate the DMA handle */
-  __HAL_LINKDMA(hsd, hdmatx, dmaTxHandle);
-  
-  /* Deinitialize the stream for new transfer */
-  HAL_DMA_DeInit(&dmaTxHandle);
-  
-  /* Configure the DMA stream */
-  HAL_DMA_Init(&dmaTxHandle); 
-  
-  /* NVIC configuration for DMA transfer complete interrupt */
-  HAL_NVIC_SetPriority(SD_DMAx_Rx_IRQn, 6, 0);
+  HAL_NVIC_SetPriority(SD_DMAx_Rx_IRQn, 7, 0);
   HAL_NVIC_EnableIRQ(SD_DMAx_Rx_IRQn);
-  
-  /* NVIC configuration for DMA transfer complete interrupt */
-  HAL_NVIC_SetPriority(SD_DMAx_Tx_IRQn, 6, 0);
+  HAL_NVIC_SetPriority(SD_DMAx_Tx_IRQn, 7, 0);
   HAL_NVIC_EnableIRQ(SD_DMAx_Tx_IRQn);
+
+  s_sdMspInited = 1U;
 }
 
 /**

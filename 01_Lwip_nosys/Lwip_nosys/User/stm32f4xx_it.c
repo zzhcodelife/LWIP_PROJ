@@ -38,6 +38,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "cc.h"
 #include "stm32f4xx_it.h"
+#include "sdio/bsp_sdio_sd.h"
 
 #include "FreeRTOS.h"
 #include "task.h"
@@ -171,13 +172,28 @@ void EXTI0_IRQHandler(void)
 }
 
 /**
- * @brief  This function handles PPP interrupt request.
- * @param  None
- * @retval None
+ * @brief  SDIO 中断（DMA 传输完成等，须调用 HAL_SD_IRQHandler）
  */
-/*void PPP_IRQHandler(void)
+void SDIO_IRQHandler(void)
 {
-}*/
+  HAL_SD_IRQHandler(&uSdHandle);
+}
+
+/**
+ * @brief  SD DMA 接收流中断
+ */
+void DMA2_Stream3_IRQHandler(void)
+{
+  HAL_DMA_IRQHandler(uSdHandle.hdmarx);
+}
+
+/**
+ * @brief  SD DMA 发送流中断
+ */
+void DMA2_Stream6_IRQHandler(void)
+{
+  HAL_DMA_IRQHandler(uSdHandle.hdmatx);
+}
 
 /**
  * @}
