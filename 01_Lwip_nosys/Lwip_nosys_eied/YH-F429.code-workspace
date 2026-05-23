@@ -10,8 +10,11 @@
     "settings": {
         "terminal.integrated.shellIntegration.enabled": false,
         "clangd.arguments": [
-            "--header-insertion=never"
+            "--header-insertion=never",
+            "--clang-tidy=0"
         ],
+        "clangd.showUnusedSymbolDiagnostics": false,
+        "clangd.showChangeOfIncludeDiagnostics": false,
         "files.autoGuessEncoding": true,
         "C_Cpp.intelliSenseEngine": "disabled",
         "C_Cpp.errorSquiggles": "disabled",

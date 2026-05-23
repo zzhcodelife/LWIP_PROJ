@@ -17,4 +17,14 @@ CompileFlags:
     - -ICJSON
     - -IMqtt
     - -IProject/RTE/_build_template
+    - -IUser/sdio
     - -I../Lwip_nosys_eied/.cmsis/include
+
+# 嵌入式工程无 compile_commands 时误报多：保留索引/跳转，关闭波浪线诊断
+Diagnostics:
+  UnusedIncludes: None
+  MissingIncludes: None
+  Suppress: ['*']
+  ClangTidy:
+    Add: []
+    Remove: ['*']
