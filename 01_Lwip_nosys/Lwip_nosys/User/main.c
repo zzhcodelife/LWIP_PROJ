@@ -122,7 +122,7 @@ static void AppTaskCreate(void)
   /* 创建Test1_Task任务 */
   xReturn = xTaskCreate((TaskFunction_t )Test1_Task, /* 任务入口函数 */
                         (const char*    )"Test1_Task",/* 任务名字 */
-                        (uint16_t       )512,   /* 任务栈大小 */
+                        (uint16_t       )1024,  /* 任务栈大小 */
                         (void*          )NULL,	/* 任务入口函数参数 */
                         (UBaseType_t    )1,	    /* 任务的优先级 */
                         (TaskHandle_t*  )&Test1_Task_Handle);/* 任务控制块指针 */
@@ -145,8 +145,6 @@ static void AppTaskCreate(void)
 static void Test1_Task(void* parameter)
 {
     uint8_t err;
-    uint32_t i;
-    uint8_t *buf;
 
     g_sd_main.init_retry_count = 0;
     g_sd_main.init_ok = 0;
@@ -167,31 +165,8 @@ static void Test1_Task(void* parameter)
     while (1)
     {
         g_sd_main.loop_count++;
-        g_sd_main.read_sector = 0;
-
-        buf = (uint8_t *)pvPortMalloc(512U);
-        if (buf == NULL)
-        {
-            g_sd_main.malloc_fail = 1;
-            vTaskDelay(pdMS_TO_TICKS(5000));
-            continue;
-        }
-
-        g_sd_main.read_sta = SD_ReadDisk(buf, 0, 1);
-        if (g_sd_main.read_sta == 0)
-        {
-            g_sd_main.read_ok = 1;
-            for (g_sd_main.read_byte_sum = 0, i = 0; i < 512U; i++)
-            {
-                g_sd_main.read_byte_sum += buf[i];
-            }
-        }
-        else
-        {
-            g_sd_main.read_ok = 0;
-        }
-
-        vPortFree(buf);
+        g_sd_main.test_sector = 4096U;
+        g_sd_main.rw_verify_ok = sd_test_rw_verify(g_sd_main.test_sector, 1U);
         vTaskDelay(pdMS_TO_TICKS(5000));
     }
 }

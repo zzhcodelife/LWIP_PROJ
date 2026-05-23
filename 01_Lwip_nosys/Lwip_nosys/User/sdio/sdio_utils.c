@@ -6,23 +6,21 @@ volatile SDIO_Dbg_t g_sdio_utils;
 
 void show_sdcard_info(void)
 {
-    switch (SDCardInfo.CardType)
+    if (SDCardInfo.CardType == CARD_SDSC)
     {
-    case STD_CAPACITY_SD_CARD_V1_1:
-        g_sdio_utils.card_type_tag = 1;
-        break;
-    case STD_CAPACITY_SD_CARD_V2_0:
-        g_sdio_utils.card_type_tag = 2;
-        break;
-    case HIGH_CAPACITY_SD_CARD:
-        g_sdio_utils.card_type_tag = 3;
-        break;
-    case MULTIMEDIA_CARD:
-        g_sdio_utils.card_type_tag = 4;
-        break;
-    default:
-        g_sdio_utils.card_type_tag = 0;
-        break;
+        g_sdio_utils.card_type_tag = (SDCardInfo.CardVersion == 0U) ? 1U : 2U;
+    }
+    else if (SDCardInfo.CardType == CARD_SDHC_SDXC)
+    {
+        g_sdio_utils.card_type_tag = 3U;
+    }
+    else if (SDCardInfo.CardType == CARD_SECURED)
+    {
+        g_sdio_utils.card_type_tag = 4U;
+    }
+    else
+    {
+        g_sdio_utils.card_type_tag = 0U;
     }
 
     g_sdio_utils.manufacturer_id = (uint8_t)((SDCARD_Handler.CID[0] >> 24) & 0xFFU);
@@ -83,4 +81,58 @@ void sd_test_write(uint32_t secaddr, uint32_t seccnt)
     g_sdio_utils.write_sta = sta;
     g_sdio_utils.write_ok = (sta == 0) ? 1U : 0U;
     vPortFree(buf);
+}
+
+uint8_t sd_test_rw_verify(uint32_t secaddr, uint32_t seccnt)
+{
+    uint32_t i, len = seccnt * 512U;
+    uint8_t *buf;
+    uint8_t sta;
+
+    g_sdio_utils.test_sector = secaddr;
+    g_sdio_utils.compare_ok = 0U;
+    g_sdio_utils.compare_fail_index = 0xFFFFFFFFU;
+
+    sd_test_write(secaddr, seccnt);
+    if (g_sdio_utils.write_ok == 0U)
+    {
+        return 0U;
+    }
+
+    buf = (uint8_t *)pvPortMalloc(len);
+    if (buf == NULL)
+    {
+        g_sdio_utils.malloc_fail = 1U;
+        return 0U;
+    }
+
+    sta = SD_ReadDisk(buf, secaddr, seccnt);
+    g_sdio_utils.read_sta = sta;
+    if (sta != 0U)
+    {
+        g_sdio_utils.read_ok = 0U;
+        vPortFree(buf);
+        return 0U;
+    }
+
+    g_sdio_utils.read_ok = 1U;
+    g_sdio_utils.read_byte_sum = 0U;
+    for (i = 0U; i < len; i++)
+    {
+        uint8_t expect = (uint8_t)(i * 3U);
+
+        g_sdio_utils.read_byte_sum += buf[i];
+        if (buf[i] != expect)
+        {
+            g_sdio_utils.compare_fail_index = i;
+            g_sdio_utils.compare_fail_expect = expect;
+            g_sdio_utils.compare_fail_actual = buf[i];
+            vPortFree(buf);
+            return 0U;
+        }
+    }
+
+    g_sdio_utils.compare_ok = 1U;
+    vPortFree(buf);
+    return 1U;
 }

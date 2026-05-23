@@ -65,8 +65,11 @@ typedef struct
     volatile uint32_t read_sector;
     volatile uint8_t  read_sta;
     volatile uint8_t  read_ok;
-    volatile uint32_t read_byte_sum;    /* 原 printf 打印的扇区数据 */
+    volatile uint32_t read_byte_sum;
     volatile uint8_t  malloc_fail;
+
+    volatile uint32_t test_sector;
+    volatile uint8_t  rw_verify_ok;     /* sd_test_rw_verify 返回值 */
 } SD_MainDbg_t;
 
 extern volatile SD_MainDbg_t g_sd_main;
