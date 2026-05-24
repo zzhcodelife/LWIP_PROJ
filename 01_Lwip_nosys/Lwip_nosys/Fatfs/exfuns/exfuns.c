@@ -2,8 +2,8 @@
 #include <string.h>
 #include "exfuns.h"
 #include "fattester.h"
-#include "malloc.h"
-#include "usart.h"//////////////////////////////////////////////////////////////////////////////////	 
+#include "FreeRTOS.h"
+#include "task.h"
 //本程序只供学习使用，未经作者许可，不得用于其它任何用途
 //ALIENTEK STM32开发板
 //FATFS 扩展代码	   
@@ -53,12 +53,12 @@ uint8_t exfuns_init(void)
 	uint8_t i;
 	for(i=0;i<_VOLUMES;i++)
 	{
-		fs[i]=(FATFS*)mymalloc(SRAMIN,sizeof(FATFS));	//为磁盘i工作区申请内存	
+		fs[i]=(FATFS*)pvPortMalloc(sizeof(FATFS));	//为磁盘i工作区申请内存	
 		if(!fs[i])break;
 	}
-	file=(FIL*)mymalloc(SRAMIN,sizeof(FIL));		//为file申请内存
-	ftemp=(FIL*)mymalloc(SRAMIN,sizeof(FIL));		//为ftemp申请内存
-	fatbuf=(uint8_t*)mymalloc(SRAMIN,512);				//为fatbuf申请内存
+	file=(FIL*)pvPortMalloc(sizeof(FIL));		//为file申请内存
+	ftemp=(FIL*)pvPortMalloc(sizeof(FIL));		//为ftemp申请内存
+	fatbuf=(uint8_t*)pvPortMalloc(512);				//为fatbuf申请内存
 	if(i==_VOLUMES&&file&&ftemp&&fatbuf)return 0;  //申请有一个失败,即失败.
 	else return 1;	
 }
@@ -167,9 +167,9 @@ uint8_t exf_copy(uint8_t(*fcpymsg)(uint8_t*pname,uint8_t pct,uint8_t mode),uint8
 	uint8_t *fbuf=0;
 	uint8_t curpct=0;
 	unsigned long long lcpdsize=cpdsize; 
- 	fsrc=(FIL*)mymalloc(SRAMIN,sizeof(FIL));//申请内存
- 	fdst=(FIL*)mymalloc(SRAMIN,sizeof(FIL));
-	fbuf=(uint8_t*)mymalloc(SRAMIN,8192);
+ 	fsrc=(FIL*)pvPortMalloc(sizeof(FIL));//申请内存
+ 	fdst=(FIL*)pvPortMalloc(sizeof(FIL));
+	fbuf=(uint8_t*)pvPortMalloc(8192);
   	if(fsrc==NULL||fdst==NULL||fbuf==NULL)res=100;//前面的值留给fatfs
 	else
 	{   
@@ -208,9 +208,9 @@ uint8_t exf_copy(uint8_t(*fcpymsg)(uint8_t*pname,uint8_t pct,uint8_t mode),uint8
 		    f_close(fdst);
 		}
 	}
-	myfree(SRAMIN,fsrc);//释放内存
-	myfree(SRAMIN,fdst);
-	myfree(SRAMIN,fbuf);
+	vPortFree(fsrc);//释放内存
+	vPortFree(fdst);
+	vPortFree(fbuf);
 	return res;
 }
 
@@ -243,12 +243,12 @@ uint32_t exf_fdsize(uint8_t *fdname)
  	uint16_t pathlen=0;		//目标路径长度
 	uint32_t fdsize=0;
 
-	fddir=(DIR*)mymalloc(SRAMIN,sizeof(DIR));//申请内存
- 	finfo=(FILINFO*)mymalloc(SRAMIN,sizeof(FILINFO));
+	fddir=(DIR*)pvPortMalloc(sizeof(DIR));//申请内存
+ 	finfo=(FILINFO*)pvPortMalloc(sizeof(FILINFO));
    	if(fddir==NULL||finfo==NULL)res=100;
 	if(res==0)
 	{ 
- 		pathname=mymalloc(SRAMIN,MAX_PATHNAME_DEPTH);	    
+ 		pathname=pvPortMalloc(MAX_PATHNAME_DEPTH);	    
  		if(pathname==NULL)res=101;	   
  		if(res==0)
 		{
@@ -274,11 +274,11 @@ uint32_t exf_fdsize(uint8_t *fdname)
 						
 				} 
 		    }	  
-  			myfree(SRAMIN,pathname);	     
+  			vPortFree(pathname);	     
 		}
  	}
-	myfree(SRAMIN,fddir);    
-	myfree(SRAMIN,finfo);
+	vPortFree(fddir);    
+	vPortFree(finfo);
 	if(res)return 0;
 	else return fdsize;
 }	  
@@ -318,15 +318,15 @@ uint8_t exf_fdcopy(uint8_t(*fcpymsg)(uint8_t*pname,uint8_t pct,uint8_t mode),uin
  	uint16_t srcpathlen=0;	//源路径长度
 
   
-	srcdir=(DIR*)mymalloc(SRAMIN,sizeof(DIR));//申请内存
- 	dstdir=(DIR*)mymalloc(SRAMIN,sizeof(DIR));
-	finfo=(FILINFO*)mymalloc(SRAMIN,sizeof(FILINFO));
+	srcdir=(DIR*)pvPortMalloc(sizeof(DIR));//申请内存
+ 	dstdir=(DIR*)pvPortMalloc(sizeof(DIR));
+	finfo=(FILINFO*)pvPortMalloc(sizeof(FILINFO));
 
    	if(srcdir==NULL||dstdir==NULL||finfo==NULL)res=100;
 	if(res==0)
 	{ 
- 		dstpathname=mymalloc(SRAMIN,MAX_PATHNAME_DEPTH);
-		srcpathname=mymalloc(SRAMIN,MAX_PATHNAME_DEPTH);
+ 		dstpathname=pvPortMalloc(MAX_PATHNAME_DEPTH);
+		srcpathname=pvPortMalloc(MAX_PATHNAME_DEPTH);
  		if(dstpathname==NULL||srcpathname==NULL)res=101;	   
  		if(res==0)
 		{
@@ -375,13 +375,13 @@ uint8_t exf_fdcopy(uint8_t(*fcpymsg)(uint8_t*pname,uint8_t pct,uint8_t mode),uin
 					dstpathname[dstpathlen]=0;//加入结束符	    
 				} 
 		    }	  
-  			myfree(SRAMIN,dstpathname);
- 			myfree(SRAMIN,srcpathname); 
+  			vPortFree(dstpathname);
+ 			vPortFree(srcpathname); 
 		}
  	}
-	myfree(SRAMIN,srcdir);
-	myfree(SRAMIN,dstdir);
-	myfree(SRAMIN,finfo);
+	vPortFree(srcdir);
+	vPortFree(dstdir);
+	vPortFree(finfo);
     return res;	  
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
