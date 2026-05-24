@@ -6,6 +6,7 @@
 /* This is an example of glue functions to attach various exsisting      */
 /* storage control modules to the FatFs module with a defined API.       */
 /*-----------------------------------------------------------------------*/
+#include <stdint.h>
 #include "diskio.h"			/* FatFs lower layer API */
 #include "sdio_sdcard.h"
 #include "w25qxx.h"
@@ -48,7 +49,7 @@ DSTATUS disk_initialize (
 	BYTE pdrv				/* Physical drive nmuber to identify the drive */
 )
 {
-	u8 res=0;	    
+	uint8_t res=0;	    
 	switch(pdrv)
 	{
 		case SD_CARD:		//SD卡
@@ -78,7 +79,7 @@ DRESULT disk_read (
 	UINT count		/* Number of sectors to read */
 )
 {
-	u8 res=0; 
+	uint8_t res=0; 
     if (!count)return RES_PARERR;//count不能等于0，否则返回参数错误		 	 
 	switch(pdrv)
 	{
@@ -122,30 +123,30 @@ DRESULT disk_write (
 	UINT count			/* Number of sectors to write */
 )
 {
-	u8 res=0;  
+	uint8_t res=0;  
     if (!count)return RES_PARERR;//count不能等于0，否则返回参数错误		 	 
 	switch(pdrv)
 	{
 		case SD_CARD://SD卡
-			res=SD_WriteDisk((u8*)buff,sector,count);
+			res=SD_WriteDisk((uint8_t*)buff,sector,count);
 			while(res)//写出错
 			{
 				SD_Init();	//重新初始化SD卡
-				res=SD_WriteDisk((u8*)buff,sector,count);	
+				res=SD_WriteDisk((uint8_t*)buff,sector,count);	
 				//printf("sd wr error:%d\r\n",res);
 			}
 			break;
 		case EX_FLASH://外部flash
 			for(;count>0;count--)
 			{										    
-				W25QXX_Write((u8*)buff,sector*FLASH_SECTOR_SIZE,FLASH_SECTOR_SIZE);
+				W25QXX_Write((uint8_t*)buff,sector*FLASH_SECTOR_SIZE,FLASH_SECTOR_SIZE);
 				sector++;
 				buff+=FLASH_SECTOR_SIZE;
 			}
 			res=0;
 			break;
 		case EX_NAND:		//外部NAND
-			res=FTL_WriteSectors((u8*)buff,sector,512,count);//写入数据
+			res=FTL_WriteSectors((uint8_t*)buff,sector,512,count);//写入数据
 			break;
 		default:
 			res=1; 

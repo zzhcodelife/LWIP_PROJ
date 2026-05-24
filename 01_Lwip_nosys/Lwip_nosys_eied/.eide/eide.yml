@@ -284,6 +284,14 @@ virtualFolder:
         - path: ../Lwip_nosys/User/sdio/sdio_sdcard.c
         - path: ../Lwip_nosys/User/sdio/sdio_utils.c
       folders: []
+    - name: Fatfs
+      files:
+        - path: ../Lwip_nosys/Fatfs/src/diskio.c
+        - path: ../Lwip_nosys/Fatfs/src/ff.c
+        - path: ../Lwip_nosys/Fatfs/exfuns/exfuns.c
+        - path: ../Lwip_nosys/Fatfs/exfuns/fattester.c
+        - path: ../Lwip_nosys/Fatfs/src/option/cc936.c
+      folders: []
 dependenceList: []
 outDir: build
 miscInfo:
@@ -309,6 +317,8 @@ targets:
         - ../Lwip_nosys/LwIP/include
         - ../Lwip_nosys/CJSON
         - ../Lwip_nosys/Mqtt
+        - ../Lwip_nosys/Fatfs
+        - ../Lwip_nosys/Fatfs/src
       libList: []
     excludeList: []
     settings:

@@ -1,9 +1,9 @@
-#include "string.h"
+#include <stdint.h>
+#include <string.h>
 #include "exfuns.h"
-#include "fattester.h"	
+#include "fattester.h"
 #include "malloc.h"
-#include "usart.h"
-//////////////////////////////////////////////////////////////////////////////////	 
+#include "usart.h"//////////////////////////////////////////////////////////////////////////////////	 
 //本程序只供学习使用，未经作者许可，不得用于其它任何用途
 //ALIENTEK STM32开发板
 //FATFS 扩展代码	   
@@ -25,7 +25,7 @@
 #define FILE_MAX_SUBT_NUM		4	//最多FILE_MAX_SUBT_NUM个小类
 
  //文件类型列表
-u8*const FILE_TYPE_TBL[FILE_MAX_TYPE_NUM][FILE_MAX_SUBT_NUM]=
+uint8_t*const FILE_TYPE_TBL[FILE_MAX_TYPE_NUM][FILE_MAX_SUBT_NUM]=
 {
 {"BIN"},			//BIN文件
 {"LRC"},			//LRC文件
@@ -43,14 +43,14 @@ UINT br,bw;			//读写变量
 FILINFO fileinfo;	//文件信息
 DIR dir;  			//目录
 
-u8 *fatbuf;			//SD卡数据缓存区
+uint8_t *fatbuf;			//SD卡数据缓存区
 ///////////////////////////////////////////////////////////////////////////////////////
 //为exfuns申请内存
 //返回值:0,成功
 //1,失败
-u8 exfuns_init(void)
+uint8_t exfuns_init(void)
 {
-	u8 i;
+	uint8_t i;
 	for(i=0;i<_VOLUMES;i++)
 	{
 		fs[i]=(FATFS*)mymalloc(SRAMIN,sizeof(FATFS));	//为磁盘i工作区申请内存	
@@ -58,13 +58,13 @@ u8 exfuns_init(void)
 	}
 	file=(FIL*)mymalloc(SRAMIN,sizeof(FIL));		//为file申请内存
 	ftemp=(FIL*)mymalloc(SRAMIN,sizeof(FIL));		//为ftemp申请内存
-	fatbuf=(u8*)mymalloc(SRAMIN,512);				//为fatbuf申请内存
+	fatbuf=(uint8_t*)mymalloc(SRAMIN,512);				//为fatbuf申请内存
 	if(i==_VOLUMES&&file&&ftemp&&fatbuf)return 0;  //申请有一个失败,即失败.
 	else return 1;	
 }
 
 //将小写字母转为大写字母,如果是数字,则保持不变.
-u8 char_upper(u8 c)
+uint8_t char_upper(uint8_t c)
 {
 	if(c<'A')return c;//数字,保持不变.
 	if(c>='a')return c-0x20;//变为大写.
@@ -74,11 +74,11 @@ u8 char_upper(u8 c)
 //fname:文件名
 //返回值:0XFF,表示无法识别的文件类型编号.
 //		 其他,高四位表示所属大类,低四位表示所属小类.
-u8 f_typetell(u8 *fname)
+uint8_t f_typetell(uint8_t *fname)
 {
-	u8 tbuf[5];
-	u8 *attr='\0';//后缀名
-	u8 i=0,j;
+	uint8_t tbuf[5];
+	uint8_t *attr='\0';//后缀名
+	uint8_t i=0,j;
 	while(i<250)
 	{
 		i++;
@@ -117,13 +117,13 @@ u8 f_typetell(u8 *fname)
 //total:总容量	 （单位KB）
 //free:剩余容量	 （单位KB）
 //返回值:0,正常.其他,错误代码
-u8 exf_getfree(u8 *drv,u32 *total,u32 *free)
+uint8_t exf_getfree(uint8_t *drv,uint32_t *total,uint32_t *free)
 {
 	FATFS *fs1;
-	u8 res;
-    u32 fre_clust=0, fre_sect=0, tot_sect=0;
+	uint8_t res;
+    uint32_t fre_clust=0, fre_sect=0, tot_sect=0;
     //得到磁盘信息及空闲簇数量
-    res =(u32)f_getfree((const TCHAR*)drv, (DWORD*)&fre_clust, &fs1);
+    res = (uint8_t)f_getfree((const TCHAR *)drv, (DWORD *)&fre_clust, &fs1);
     if(res==0)
 	{											   
 	    tot_sect=(fs1->n_fatent-2)*fs1->csize;	//得到总扇区数
@@ -157,19 +157,19 @@ u8 exf_getfree(u8 *drv,u32 *total,u32 *free)
 //1:覆盖原有的文件
 //返回值:0,正常
 //    其他,错误,0XFF,强制退出
-u8 exf_copy(u8(*fcpymsg)(u8*pname,u8 pct,u8 mode),u8 *psrc,u8 *pdst,u32 totsize,u32 cpdsize,u8 fwmode)
+uint8_t exf_copy(uint8_t(*fcpymsg)(uint8_t*pname,uint8_t pct,uint8_t mode),uint8_t *psrc,uint8_t *pdst,uint32_t totsize,uint32_t cpdsize,uint8_t fwmode)
 {
-	u8 res;
-    u16 br=0;
-	u16 bw=0;
+	uint8_t res;
+    uint16_t br=0;
+	uint16_t bw=0;
 	FIL *fsrc=0;
 	FIL *fdst=0;
-	u8 *fbuf=0;
-	u8 curpct=0;
+	uint8_t *fbuf=0;
+	uint8_t curpct=0;
 	unsigned long long lcpdsize=cpdsize; 
  	fsrc=(FIL*)mymalloc(SRAMIN,sizeof(FIL));//申请内存
  	fdst=(FIL*)mymalloc(SRAMIN,sizeof(FIL));
-	fbuf=(u8*)mymalloc(SRAMIN,8192);
+	fbuf=(uint8_t*)mymalloc(SRAMIN,8192);
   	if(fsrc==NULL||fdst==NULL||fbuf==NULL)res=100;//前面的值留给fatfs
 	else
 	{   
@@ -217,9 +217,9 @@ u8 exf_copy(u8(*fcpymsg)(u8*pname,u8 pct,u8 mode),u8 *psrc,u8 *pdst,u32 totsize,
 //得到路径下的文件夹
 //返回值:0,路径就是个卷标号.
 //    其他,文件夹名字首地址
-u8* exf_get_src_dname(u8* dpfn)
+uint8_t* exf_get_src_dname(uint8_t* dpfn)
 {
-	u16 temp=0;
+	uint16_t temp=0;
  	while(*dpfn!=0)
 	{
 		dpfn++;
@@ -233,15 +233,15 @@ u8* exf_get_src_dname(u8* dpfn)
 //注意文件夹大小不要超过4GB.
 //返回值:0,文件夹大小为0,或者读取过程中发生了错误.
 //    其他,文件夹大小.
-u32 exf_fdsize(u8 *fdname)
+uint32_t exf_fdsize(uint8_t *fdname)
 {
 #define MAX_PATHNAME_DEPTH	512+1	//最大目标文件路径+文件名深度
-	u8 res=0;	  
+	uint8_t res=0;	  
     DIR *fddir=0;		//目录
 	FILINFO *finfo=0;	//文件信息
-	u8 * pathname=0;	//目标文件夹路径+文件名
- 	u16 pathlen=0;		//目标路径长度
-	u32 fdsize=0;
+	uint8_t * pathname=0;	//目标文件夹路径+文件名
+ 	uint16_t pathlen=0;		//目标路径长度
+	uint32_t fdsize=0;
 
 	fddir=(DIR*)mymalloc(SRAMIN,sizeof(DIR));//申请内存
  	finfo=(FILINFO*)mymalloc(SRAMIN,sizeof(FILINFO));
@@ -302,20 +302,20 @@ u32 exf_fdsize(u8 *fdname)
 //1:覆盖原有的文件
 //返回值:0,成功
 //    其他,错误代码;0XFF,强制退出
-u8 exf_fdcopy(u8(*fcpymsg)(u8*pname,u8 pct,u8 mode),u8 *psrc,u8 *pdst,u32 *totsize,u32 *cpdsize,u8 fwmode)
+uint8_t exf_fdcopy(uint8_t(*fcpymsg)(uint8_t*pname,uint8_t pct,uint8_t mode),uint8_t *psrc,uint8_t *pdst,uint32_t *totsize,uint32_t *cpdsize,uint8_t fwmode)
 {
 #define MAX_PATHNAME_DEPTH	512+1	//最大目标文件路径+文件名深度
-	u8 res=0;	  
+	uint8_t res=0;	  
     DIR *srcdir=0;		//源目录
 	DIR *dstdir=0;		//源目录
 	FILINFO *finfo=0;	//文件信息
-	u8 *fn=0;   		//长文件名
+	uint8_t *fn=0;   		//长文件名
 
-	u8 * dstpathname=0;	//目标文件夹路径+文件名
-	u8 * srcpathname=0;	//源文件夹路径+文件名
+	uint8_t * dstpathname=0;	//目标文件夹路径+文件名
+	uint8_t * srcpathname=0;	//源文件夹路径+文件名
 	
- 	u16 dstpathlen=0;	//目标路径长度
- 	u16 srcpathlen=0;	//源路径长度
+ 	uint16_t dstpathlen=0;	//目标路径长度
+ 	uint16_t srcpathlen=0;	//源路径长度
 
   
 	srcdir=(DIR*)mymalloc(SRAMIN,sizeof(DIR));//申请内存
@@ -353,7 +353,7 @@ u8 exf_fdcopy(u8(*fcpymsg)(u8*pname,u8 pct,u8 mode),u8 *psrc,u8 *pdst,u32 *totsi
 			        res=f_readdir(srcdir,finfo);					//读取目录下的一个文件
 			        if(res!=FR_OK||finfo->fname[0]==0)break;		//错误了/到末尾了,退出
 			        if(finfo->fname[0]=='.')continue;     			//忽略上级目录
-					fn=(u8*)finfo->fname; 							//得到文件名
+					fn=(uint8_t*)finfo->fname; 							//得到文件名
 					dstpathlen=strlen((const char*)dstpathname);	//得到当前目标路径的长度
 					srcpathlen=strlen((const char*)srcpathname);	//得到源路径长度
 

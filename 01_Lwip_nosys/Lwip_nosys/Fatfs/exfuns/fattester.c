@@ -23,7 +23,7 @@
 //path:磁盘路径，比如"0:"、"1:"
 //mt:0，不立即注册（稍后注册）；1，立即注册
 //返回值:执行结果
-u8 mf_mount(u8* path,u8 mt)
+uint8_t mf_mount(uint8_t* path,uint8_t mt)
 {		   
 	return f_mount(fs[1],(const TCHAR*)path,mt); 
 }
@@ -31,15 +31,15 @@ u8 mf_mount(u8* path,u8 mt)
 //path:路径+文件名
 //mode:打开模式
 //返回值:执行结果
-u8 mf_open(u8*path,u8 mode)
+uint8_t mf_open(uint8_t*path,uint8_t mode)
 {
-	u8 res;	 
+	uint8_t res;	 
 	res=f_open(file,(const TCHAR*)path,mode);//打开文件夹
 	return res;
 } 
 //关闭文件
 //返回值:执行结果
-u8 mf_close(void)
+uint8_t mf_close(void)
 {
 	f_close(file);
 	return 0;
@@ -47,11 +47,11 @@ u8 mf_close(void)
 //读出数据
 //len:读出的长度
 //返回值:执行结果
-u8 mf_read(u16 len)
+uint8_t mf_read(uint16_t len)
 {
-	u16 i,t;
-	u8 res=0;
-	u16 tlen=0;
+	uint16_t i,t;
+	uint8_t res=0;
+	uint16_t tlen=0;
 	printf("\r\nRead file data is:\r\n");
 	for(i=0;i<len/512;i++)
 	{
@@ -86,9 +86,9 @@ u8 mf_read(u16 len)
 //dat:数据缓存区
 //len:写入长度
 //返回值:执行结果
-u8 mf_write(u8*dat,u16 len)
+uint8_t mf_write(uint8_t*dat,uint16_t len)
 {			    
-	u8 res;	   					   
+	uint8_t res;	   					   
 
 	printf("\r\nBegin Write file...\r\n");
 	printf("Write data len:%d\r\n",len);	 
@@ -104,21 +104,21 @@ u8 mf_write(u8*dat,u16 len)
 //打开目录
  //path:路径
 //返回值:执行结果
-u8 mf_opendir(u8* path)
+uint8_t mf_opendir(uint8_t* path)
 {
 	return f_opendir(&dir,(const TCHAR*)path);	
 }
 //关闭目录 
 //返回值:执行结果
-u8 mf_closedir(void)
+uint8_t mf_closedir(void)
 {
 	return f_closedir(&dir);	
 }
 //打读取文件夹
 //返回值:执行结果
-u8 mf_readdir(void)
+uint8_t mf_readdir(void)
 {
-	u8 res;    
+	uint8_t res;    
 	res=f_readdir(&dir,&fileinfo);	//读取一个文件的信息
 	if(res!=FR_OK)return res;		//出错了 
 	printf("\r\n DIR info:\r\n");
@@ -145,7 +145,7 @@ u8 mf_readdir(void)
  //遍历文件
  //path:路径
  //返回值:执行结果
-u8 mf_scan_files(u8 * path)
+uint8_t mf_scan_files(uint8_t * path)
 {
 	FRESULT res;	 
     res = f_opendir(&dir,(const TCHAR*)path); //打开一个目录
@@ -166,11 +166,11 @@ u8 mf_scan_files(u8 * path)
 //显示剩余容量
 //drv:盘符
 //返回值:剩余容量(字节)
-u32 mf_showfree(u8 *drv)
+uint32_t mf_showfree(uint8_t *drv)
 {
 	FATFS *fs1;
-	u8 res;
-    u32 fre_clust=0, fre_sect=0, tot_sect=0;
+	uint8_t res;
+    uint32_t fre_clust=0, fre_sect=0, tot_sect=0;
     //得到磁盘信息及空闲簇数量
     res = f_getfree((const TCHAR*)drv,(DWORD*)&fre_clust, &fs1);
     if(res==0)
@@ -200,26 +200,26 @@ u32 mf_showfree(u8 *drv)
 //文件读写指针偏移
 //offset:相对首地址的偏移量
 //返回值:执行结果.
-u8 mf_lseek(u32 offset)
+uint8_t mf_lseek(uint32_t offset)
 {
 	return f_lseek(file,offset);
 }
 //读取文件当前读写指针的位置.
 //返回值:位置
-u32 mf_tell(void)
+uint32_t mf_tell(void)
 {
 	return f_tell(file);
 }
 //读取文件大小
 //返回值:文件大小
-u32 mf_size(void)
+uint32_t mf_size(void)
 {
 	return f_size(file);
 } 
 //创建目录
 //pname:目录路径+名字
 //返回值:执行结果
-u8 mf_mkdir(u8*pname)
+uint8_t mf_mkdir(uint8_t*pname)
 {
 	return f_mkdir((const TCHAR *)pname);
 }
@@ -228,14 +228,14 @@ u8 mf_mkdir(u8*pname)
 //mode:模式
 //au:簇大小
 //返回值:执行结果
-u8 mf_fmkfs(u8* path,u8 mode,u16 au)
+uint8_t mf_fmkfs(uint8_t* path,uint8_t mode,uint16_t au)
 {
 	return f_mkfs((const TCHAR*)path,mode,au);//格式化,drv:盘符;mode:模式;au:簇大小
 } 
 //删除文件/目录
 //pname:文件/目录路径+名字
 //返回值:执行结果
-u8 mf_unlink(u8 *pname)
+uint8_t mf_unlink(uint8_t *pname)
 {
 	return  f_unlink((const TCHAR *)pname);
 }
@@ -244,17 +244,17 @@ u8 mf_unlink(u8 *pname)
 //oldname:之前的名字
 //newname:新名字
 //返回值:执行结果
-u8 mf_rename(u8 *oldname,u8* newname)
+uint8_t mf_rename(uint8_t *oldname,uint8_t* newname)
 {
 	return  f_rename((const TCHAR *)oldname,(const TCHAR *)newname);
 }
 //获取盘符（磁盘名字）
 //path:磁盘路径，比如"0:"、"1:"  
-void mf_getlabel(u8 *path)
+void mf_getlabel(uint8_t *path)
 {
-	u8 buf[20];
-	u32 sn=0;
-	u8 res;
+	uint8_t buf[20];
+	uint32_t sn=0;
+	uint8_t res;
 	res=f_getlabel ((const TCHAR *)path,(TCHAR *)buf,(DWORD*)&sn);
 	if(res==FR_OK)
 	{
@@ -264,9 +264,9 @@ void mf_getlabel(u8 *path)
 }
 //设置盘符（磁盘名字），最长11个字符！！，支持数字和大写字母组合以及汉字等
 //path:磁盘号+名字，比如"0:ALIENTEK"、"1:OPENEDV"  
-void mf_setlabel(u8 *path)
+void mf_setlabel(uint8_t *path)
 {
-	u8 res;
+	uint8_t res;
 	res=f_setlabel ((const TCHAR *)path);
 	if(res==FR_OK)
 	{
@@ -276,7 +276,7 @@ void mf_setlabel(u8 *path)
 
 //从文件里面读取一段字符串
 //size:要读取的长度
-void mf_gets(u16 size)
+void mf_gets(uint16_t size)
 {
  	TCHAR* rbuf;
 	rbuf=f_gets((TCHAR*)fatbuf,size,file);
@@ -290,14 +290,14 @@ void mf_gets(u16 size)
 //写一个字符到文件
 //c:要写入的字符
 //返回值:执行结果
-u8 mf_putc(u8 c)
+uint8_t mf_putc(uint8_t c)
 {
 	return f_putc((TCHAR)c,file);
 }
 //写字符串到文件
 //c:要写入的字符串
 //返回值:写入的字符串长度
-u8 mf_puts(u8*c)
+uint8_t mf_puts(uint8_t*c)
 {
 	return f_puts((TCHAR*)c,file);
 }
