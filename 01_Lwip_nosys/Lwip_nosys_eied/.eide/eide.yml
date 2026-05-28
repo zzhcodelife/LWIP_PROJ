@@ -288,8 +288,7 @@ virtualFolder:
       files:
         - path: ../Lwip_nosys/Fatfs/src/diskio.c
         - path: ../Lwip_nosys/Fatfs/src/ff.c
-        - path: ../Lwip_nosys/Fatfs/exfuns/exfuns.c
-        - path: ../Lwip_nosys/Fatfs/exfuns/fattester.c
+        - path: ../Lwip_nosys/Fatfs/fatfs_utils.c
         - path: ../Lwip_nosys/Fatfs/src/option/cc936.c
       folders: []
 dependenceList: []

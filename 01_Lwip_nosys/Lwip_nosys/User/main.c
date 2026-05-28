@@ -21,14 +21,12 @@
 *************************************************************************
 */ 
 #include "main.h"
-#include "sdio/sdio_sdcard.h"
 #include "sdio/sdio_utils.h"
+#include "fatfs_utils.h"
 /* FreeRTOS头文件 */
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
-
-volatile SD_MainDbg_t g_sd_main;
 
 /**************************** 任务句柄 ********************************/
 /* 
@@ -122,7 +120,7 @@ static void AppTaskCreate(void)
   /* 创建Test1_Task任务 */
   xReturn = xTaskCreate((TaskFunction_t )Test1_Task, /* 任务入口函数 */
                         (const char*    )"Test1_Task",/* 任务名字 */
-                        (uint16_t       )1024,  /* 任务栈大小 */
+                        (uint16_t       )2048,  /* 任务栈大小（FatFs+LFN） */
                         (void*          )NULL,	/* 任务入口函数参数 */
                         (UBaseType_t    )1,	    /* 任务的优先级 */
                         (TaskHandle_t*  )&Test1_Task_Handle);/* 任务控制块指针 */
@@ -144,30 +142,12 @@ static void AppTaskCreate(void)
   ********************************************************************/
 static void Test1_Task(void* parameter)
 {
-    uint8_t err;
-
-    g_sd_main.init_retry_count = 0;
-    g_sd_main.init_ok = 0;
-    do
-    {
-        err = SD_Init();
-        g_sd_main.init_retry_count++;
-        g_sd_main.last_init_err = err;
-        if (err != 0)
-        {
-            vTaskDelay(pdMS_TO_TICKS(1000));
-        }
-    } while (err != 0);
-
-    g_sd_main.init_ok = 1;
+    (void)fatfs_test_run();
     show_sdcard_info();
 
     while (1)
     {
-        g_sd_main.loop_count++;
-        g_sd_main.test_sector = 4096U;
-        g_sd_main.rw_verify_ok = sd_test_rw_verify(g_sd_main.test_sector, 1U);
-        vTaskDelay(pdMS_TO_TICKS(5000));
+        vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }
 

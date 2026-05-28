@@ -54,26 +54,6 @@
 
 void BSP_Init(void);
 
-/* SD 测试观测变量（Keil Watch: g_sd_main） */
-typedef struct
-{
-    volatile uint32_t init_retry_count; /* while(SD_Init()) 累计次数 */
-    volatile uint8_t  init_ok;          /* 1=最终初始化成功 */
-    volatile uint8_t  last_init_err;    /* 最后一次 SD_Init 返回值 */
-
-    volatile uint32_t loop_count;       /* 读扇区循环次数 */
-    volatile uint32_t read_sector;
-    volatile uint8_t  read_sta;
-    volatile uint8_t  read_ok;
-    volatile uint32_t read_byte_sum;
-    volatile uint8_t  malloc_fail;
-
-    volatile uint32_t test_sector;
-    volatile uint8_t  rw_verify_ok;     /* sd_test_rw_verify 返回值 */
-} SD_MainDbg_t;
-
-extern volatile SD_MainDbg_t g_sd_main;
-
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/

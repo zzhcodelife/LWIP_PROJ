@@ -14,6 +14,9 @@
                 "${workspaceFolder}/LwIP/include",
                 "${workspaceFolder}/CJSON",
                 "${workspaceFolder}/Mqtt",
+                "${workspaceFolder}/Fatfs",
+                "${workspaceFolder}/Fatfs/src",
+                "${workspaceFolder}/User/sdio",
                 "${workspaceFolder}/Project/RTE/_build_template",
                 "${workspaceFolder}/../Lwip_nosys_eied/.cmsis/include"
             ],
