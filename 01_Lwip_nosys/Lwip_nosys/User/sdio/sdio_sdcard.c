@@ -125,6 +125,7 @@ static uint8_t SD_WaitTransferDone(SD_HandleTypeDef *hsd)
         {
             return 1;
         }
+        vTaskDelay(pdMS_TO_TICKS(1));
     }
     return 0;
 }

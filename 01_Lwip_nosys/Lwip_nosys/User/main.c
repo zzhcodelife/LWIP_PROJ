@@ -145,9 +145,9 @@ static void Test1_Task(void* parameter)
 {
     //show_sdcard_info();
     //sd_test_rw_verify_dual();
-    while (SD_Init() != SD_OK) 
+    while (SD_Init() != SD_OK)
     {
-        vTaskDelay(pdMS_TO_TICKS(1000));   // 失败会反复试，给卡上电/稳定时间
+        vTaskDelay(pdMS_TO_TICKS(500));
     }
 
     (void)fatfs_test_run();

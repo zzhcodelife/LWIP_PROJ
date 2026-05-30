@@ -4,27 +4,32 @@
 #include <stdint.h>
 #include "diskio.h"
 #include "sdio_sdcard.h"
-#include "fatfs_utils.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "semphr.h"
 #include "ff.h"
 
-#define SD_CARD       0U
+#define SD_CARD  0U
 
 DSTATUS disk_status(BYTE pdrv)
 {
-    if (pdrv != SD_CARD) {     //只有SD卡一个设备
+    if (pdrv != SD_CARD) {
+        return STA_NOINIT;
+    }
+    if (SDCardInfo.LogBlockNbr == 0U) {
         return STA_NOINIT;
     }
     return RES_OK;
 }
 
 DSTATUS disk_initialize(BYTE pdrv)
-{   
-    if (pdrv != SD_CARD) return STA_NOINIT;
-    if (SDCARD_Handler.State == HAL_SD_STATE_READY) {
-        return RES_OK;  
+{
+    if (pdrv != SD_CARD) {
+        return STA_NOINIT;
+    }
+    /* main 里已 SD_Init 成功时跳过，避免二次 CMD55 */
+    if (SDCardInfo.LogBlockNbr > 0U) {
+        return RES_OK;
     }
     return (SD_Init() == SD_OK) ? RES_OK : STA_NOINIT;
 }
@@ -32,15 +37,11 @@ DSTATUS disk_initialize(BYTE pdrv)
 DRESULT disk_read(BYTE pdrv, BYTE *buff, DWORD sector, UINT count)
 {
     uint8_t res;
-    if (count == 0U) {
+
+    if (pdrv != SD_CARD || count == 0U) {
         return RES_PARERR;
     }
-    res = SD_ReadDisk(buff,sector,count);	 
-	while(res)      
-	{
-		SD_Init();	
-		res = SD_ReadDisk(buff,sector,count);	
-	}
+    res = SD_ReadDisk(buff, sector, count);
     return (res == SD_OK) ? RES_OK : RES_ERROR;
 }
 
@@ -48,17 +49,10 @@ DRESULT disk_write(BYTE pdrv, const BYTE *buff, DWORD sector, UINT count)
 {
     uint8_t res;
 
-    if (count == 0U) {
+    if (pdrv != SD_CARD || count == 0U) {
         return RES_PARERR;
     }
-    res = SD_WriteDisk((uint8_t *)buff,sector,count);
-
-    while(res)
-    {
-        SD_Init();
-        res=SD_WriteDisk((uint8_t *)buff,sector,count);	
-    }
-
+    res = SD_WriteDisk((uint8_t *)buff, sector, count);
     return (res == SD_OK) ? RES_OK : RES_ERROR;
 }
 
@@ -75,13 +69,13 @@ DRESULT disk_ioctl(BYTE pdrv, BYTE cmd, void *buff)
         res = RES_OK;
         break;
 
-    case GET_SECTOR_SIZE:   
+    case GET_SECTOR_SIZE:
         *(DWORD *)buff = 512;
         res = RES_OK;
         break;
 
     case GET_BLOCK_SIZE:
-        *(WORD*)buff = 1;
+        *(WORD *)buff = 1;
         res = RES_OK;
         break;
 
@@ -89,6 +83,7 @@ DRESULT disk_ioctl(BYTE pdrv, BYTE cmd, void *buff)
         *(DWORD *)buff = SDCardInfo.LogBlockNbr;
         res = RES_OK;
         break;
+
     default:
         res = RES_PARERR;
         break;
