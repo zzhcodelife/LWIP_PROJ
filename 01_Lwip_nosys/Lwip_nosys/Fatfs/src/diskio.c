@@ -22,8 +22,11 @@ DSTATUS disk_status(BYTE pdrv)
 
 DSTATUS disk_initialize(BYTE pdrv)
 {   
-    uint8_t res = SD_Init();    
-    return (res == SD_OK) ? RES_OK : STA_NOINIT;
+    if (pdrv != SD_CARD) return STA_NOINIT;
+    if (SDCARD_Handler.State == HAL_SD_STATE_READY) {
+        return RES_OK;  
+    }
+    return (SD_Init() == SD_OK) ? RES_OK : STA_NOINIT;
 }
 
 DRESULT disk_read(BYTE pdrv, BYTE *buff, DWORD sector, UINT count)

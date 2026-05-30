@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include "stm32f4xx_hal.h"
 
-#define SD_TIMEOUT   ((uint32_t)100000000U)
+#define SD_TIMEOUT   ((uint32_t)30000U)   /* ms，调试：30s 超时 */
 #define SD_DMA_MODE  1U   /* 1：DMA模式，0：查询模式 */
 #define SD_OK        0U
 
