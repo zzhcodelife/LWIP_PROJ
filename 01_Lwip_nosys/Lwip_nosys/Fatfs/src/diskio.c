@@ -11,62 +11,33 @@
 #include "ff.h"
 
 #define SD_CARD       0U
-#define DISK_IO_RETRY 3U
-
-static uint8_t disk_try_rw(uint8_t (*fn)(uint8_t *, uint32_t, uint32_t),
-                             uint8_t *buf, uint32_t sector, uint32_t count)
-{
-    uint8_t res;
-    uint8_t retry;
-
-    res = fn(buf, sector, count);
-    for (retry = 0U; res != SD_OK && retry < DISK_IO_RETRY; retry++) {
-        if (SD_Init() != SD_OK) {
-            break;
-        }
-        res = fn(buf, sector, count);
-    }
-
-    if (res != SD_OK) {
-        g_fatfs_test.disk_last_sector = sector;
-        g_fatfs_test.disk_last_sta = res;
-        g_fatfs_test.disk_last_hal_err = (uint32_t)SDCARD_Handler.ErrorCode;
-    }
-    return res;
-}
 
 DSTATUS disk_status(BYTE pdrv)
 {
-    if (pdrv != SD_CARD) {
+    if (pdrv != SD_CARD) {     //只有SD卡一个设备
         return STA_NOINIT;
     }
-    return 0;
+    return RES_OK;
 }
 
 DSTATUS disk_initialize(BYTE pdrv)
-{
-    uint8_t res;
-
-    if (pdrv != SD_CARD) {
-        return STA_NOINIT;
-    }
-
-    res = SD_Init();
-    if (res == SD_OK) {
-        g_fatfs_test.sd_sector_count = SDCardInfo.LogBlockNbr;
-    }
-    return (res == SD_OK) ? 0 : STA_NOINIT;
+{   
+    uint8_t res = SD_Init();    
+    return (res == SD_OK) ? RES_OK : STA_NOINIT;
 }
 
 DRESULT disk_read(BYTE pdrv, BYTE *buff, DWORD sector, UINT count)
 {
     uint8_t res;
-
-    if (pdrv != SD_CARD || buff == NULL || count == 0U) {
+    if (count == 0U) {
         return RES_PARERR;
     }
-
-    res = disk_try_rw(SD_ReadDisk, buff, sector, count);
+    res = SD_ReadDisk(buff,sector,count);	 
+	while(res)      
+	{
+		SD_Init();	
+		res = SD_ReadDisk(buff,sector,count);	
+	}
     return (res == SD_OK) ? RES_OK : RES_ERROR;
 }
 
@@ -74,42 +45,52 @@ DRESULT disk_write(BYTE pdrv, const BYTE *buff, DWORD sector, UINT count)
 {
     uint8_t res;
 
-    if (pdrv != SD_CARD || buff == NULL || count == 0U) {
+    if (count == 0U) {
         return RES_PARERR;
     }
+    res = SD_WriteDisk((uint8_t *)buff,sector,count);
 
-    res = disk_try_rw(SD_WriteDisk, (uint8_t *)buff, sector, count);
+    while(res)
+    {
+        SD_Init();
+        res=SD_WriteDisk((uint8_t *)buff,sector,count);	
+    }
+
     return (res == SD_OK) ? RES_OK : RES_ERROR;
 }
 
 DRESULT disk_ioctl(BYTE pdrv, BYTE cmd, void *buff)
 {
-    if (pdrv != SD_CARD || buff == NULL) {
+    DRESULT res;
+
+    if (pdrv != SD_CARD) {
         return RES_PARERR;
     }
 
     switch (cmd) {
     case CTRL_SYNC:
-        return RES_OK;
+        res = RES_OK;
+        break;
 
-    case GET_SECTOR_SIZE:
-        *(WORD *)buff = 512;
-        return RES_OK;
+    case GET_SECTOR_SIZE:   
+        *(DWORD *)buff = 512;
+        res = RES_OK;
+        break;
 
     case GET_BLOCK_SIZE:
-        *(WORD *)buff = 1;
-        return RES_OK;
+        *(WORD*)buff = 1;
+        res = RES_OK;
+        break;
 
     case GET_SECTOR_COUNT:
-        if (SDCardInfo.LogBlockNbr < 128U) {
-            return RES_ERROR;
-        }
         *(DWORD *)buff = SDCardInfo.LogBlockNbr;
-        return RES_OK;
-
+        res = RES_OK;
+        break;
     default:
-        return RES_PARERR;
+        res = RES_PARERR;
+        break;
     }
+    return res;
 }
 
 DWORD get_fattime(void)

@@ -136,3 +136,9 @@ uint8_t sd_test_rw_verify(uint32_t secaddr, uint32_t seccnt)
     vPortFree(buf);
     return 1U;
 }
+
+void sd_test_rw_verify_dual(void)
+{
+    g_sdio_utils.verify_ok_4096 = sd_test_rw_verify(4096U, 1U);
+    g_sdio_utils.verify_ok_0 = sd_test_rw_verify(0U, 1U);
+}

@@ -17,7 +17,12 @@
         "clangd.arguments": [
             "--header-insertion=never",
             "--compile-commands-dir=${workspaceFolder:eied}/build/build_template",
-            "--query-driver=D:/Keil_v5/Keil5_MDK/ARM/ARMCC/bin/armcc.exe"
+            "--query-driver=D:/Keil_v5/Keil5_MDK/ARM/ARMCC/bin/armcc.exe",
+            "--background-index"
+        ],
+        "clangd.fallbackFlags": [
+            "-std=c11",
+            "--target=thumbv7em-none-eabi"
         ],
         "files.autoGuessEncoding": true,
         "C_Cpp.intelliSenseEngine": "disabled",

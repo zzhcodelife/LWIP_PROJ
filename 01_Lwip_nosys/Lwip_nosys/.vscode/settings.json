@@ -1,6 +1,13 @@
 {
-  "C_Cpp.errorSquiggles": "disabled",
   "C_Cpp.intelliSenseEngine": "disabled",
+  "C_Cpp.errorSquiggles": "disabled",
+  "C_Cpp.autocomplete": "disabled",
   "clangd.checkUpdates": false,
-  "clangd.onConfigChanged": "restart"
+  "clangd.onConfigChanged": "restart",
+  "clangd.detectExtensionConflicts": true,
+  "clangd.arguments": [
+    "--header-insertion=never",
+    "--compile-commands-dir=${workspaceFolder}/../Lwip_nosys_eied/build/build_template",
+    "--query-driver=D:/Keil_v5/Keil5_MDK/ARM/ARMCC/bin/armcc.exe"
+  ]
 }

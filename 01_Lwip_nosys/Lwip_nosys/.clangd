@@ -1,9 +1,33 @@
-# clangd 用 compile_commands 的 -I/-D，但过滤 Keil ARMCC 专用参数（否则整文件报红）
+# clangd 跳转：compile_commands + 手动 -I/-D 双保险（与 eide.yml incList/defineList 对齐）
 CompileFlags:
   CompilationDatabase: ../Lwip_nosys_eied/build/build_template
   Add:
     - -std=c11
     - --target=thumbv7em-none-eabi
+    - -isystemD:/Keil_v5/Keil5_MDK/ARM/ARMCC/include
+    - -isystemD:/Keil_v5/Keil5_MDK/ARM/ARMCC/include/rw
+    - -DUSE_HAL_DRIVER
+    - -DSTM32F429xx
+    - -DUSE_STM32F429I_DISCO
+    - -D__CC_ARM=1
+    - -D__arm__=1
+    - -D__thumb__=1
+    - -I.
+    - -IUser
+    - -IUser/arch
+    - -IUser/sdio
+    - -ILibraries/CMSIS/Include
+    - -ILibraries/CMSIS/Device/ST/STM32F4xx/Include
+    - -ILibraries/STM32F4xx_HAL_Driver/Inc
+    - -IFreeRTOS/include
+    - -IFreeRTOS/portable/RVDS/ARM_CM4F
+    - -ILwIP/include
+    - -ICJSON
+    - -IMqtt
+    - -IFatfs
+    - -IFatfs/src
+    - -IProject/RTE/_build_template
+    - -I../Lwip_nosys_eied/.cmsis/include
   Remove:
     - -c
     - --apcs=*

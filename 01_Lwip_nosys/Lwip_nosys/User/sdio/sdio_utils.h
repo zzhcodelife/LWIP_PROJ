@@ -26,6 +26,9 @@ typedef struct
     volatile uint32_t compare_fail_index;
     volatile uint8_t  compare_fail_expect;
     volatile uint8_t  compare_fail_actual;
+
+    volatile uint8_t  verify_ok_4096;   /* sd_test_rw_verify(4096,1) 返回值 */
+    volatile uint8_t  verify_ok_0;      /* sd_test_rw_verify(0,1) 返回值 */
 } SDIO_Dbg_t;
 
 extern volatile SDIO_Dbg_t g_sdio_utils;
@@ -34,5 +37,6 @@ void show_sdcard_info(void);
 void sd_test_read(uint32_t secaddr, uint32_t seccnt);
 void sd_test_write(uint32_t secaddr, uint32_t seccnt);
 uint8_t sd_test_rw_verify(uint32_t secaddr, uint32_t seccnt);
+void sd_test_rw_verify_dual(void);
 
 #endif

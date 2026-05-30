@@ -22,6 +22,7 @@
 */ 
 #include "main.h"
 #include "sdio/sdio_utils.h"
+#include "sdio/sdio_sdcard.h"
 #include "fatfs_utils.h"
 /* FreeRTOSÍ·ÎÄ¼þ */
 #include "FreeRTOS.h"
@@ -142,8 +143,13 @@ static void AppTaskCreate(void)
   ********************************************************************/
 static void Test1_Task(void* parameter)
 {
-    (void)fatfs_test_run();
+    while (SD_Init() != SD_OK) {
+        vTaskDelay(pdMS_TO_TICKS(500));
+    }
+
     show_sdcard_info();
+    sd_test_rw_verify_dual();
+    (void)fatfs_test_run();
 
     while (1)
     {

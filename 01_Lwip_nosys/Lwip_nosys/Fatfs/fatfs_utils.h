@@ -43,6 +43,12 @@ typedef struct
     volatile uint32_t disk_last_sector;   /* 最后一次失败的扇区号 */
     volatile uint8_t  disk_last_sta;      /* 最后一次 SD_Read/WriteDisk 返回值 */
     volatile uint32_t disk_last_hal_err;  /* 失败时 SDCARD_Handler.ErrorCode */
+
+    volatile uint8_t  disk_ioctl_last_cmd;       /* 最近一次 disk_ioctl 命令码 */
+    volatile uint8_t  disk_ioctl_last_res;       /* 最近一次 DRESULT：0=OK 1=ERROR 4=PARERR */
+    volatile uint32_t disk_ioctl_log_block_nbr;  /* 调用时 SDCardInfo.LogBlockNbr */
+    volatile uint8_t  disk_ioctl_sd_state;       /* 调用时 SDCARD_Handler.State */
+    volatile uint32_t disk_ioctl_out_val;        /* 成功时写入 *buff 的值（如扇区总数） */
 } FatFs_TestDbg_t;
 
 extern volatile FatFs_TestDbg_t g_fatfs_test;
