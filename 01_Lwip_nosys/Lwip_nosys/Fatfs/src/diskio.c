@@ -9,7 +9,11 @@
 #include "semphr.h"
 #include "ff.h"
 
-#define SD_CARD  0U
+#define SD_CARD         0U
+#define DISK_RD_RETRY   2U   /* 读失败后 SD_Recover 再试次数 */
+#define DISK_RD_RECOVER_MS  50U
+
+volatile Disk_Dbg_t g_disk_dbg;
 
 DSTATUS disk_status(BYTE pdrv)
 {
@@ -37,23 +41,80 @@ DSTATUS disk_initialize(BYTE pdrv)
 DRESULT disk_read(BYTE pdrv, BYTE *buff, DWORD sector, UINT count)
 {
     uint8_t res;
+    DRESULT dr;
 
     if (pdrv != SD_CARD || count == 0U) {
+        g_disk_dbg.rd_fail_cnt++;
+        g_disk_dbg.last_is_read = 1U;
+        g_disk_dbg.last_sd_res = 0xFFU;
+        g_disk_dbg.last_dresult = (uint8_t)RES_PARERR;
+        g_disk_dbg.last_sector = sector;
+        g_disk_dbg.last_count = (DWORD)count;
+        g_disk_dbg.last_hal_error = SDCARD_Handler.ErrorCode;
+        g_disk_dbg.last_sdio_sta = SDIO->STA;
+        g_disk_dbg.last_hal_state = (BYTE)SDCARD_Handler.State;
         return RES_PARERR;
     }
-    res = SD_ReadDisk(buff, sector, count);
-    return (res == SD_OK) ? RES_OK : RES_ERROR;
+    {
+        uint8_t attempt;
+
+        dr = RES_ERROR;
+        for (attempt = 0U; attempt <= DISK_RD_RETRY; attempt++) {
+            if (attempt > 0U) {
+                (void)SD_Recover();
+                vTaskDelay(pdMS_TO_TICKS(DISK_RD_RECOVER_MS));
+            }
+            res = SD_ReadDisk(buff, sector, count);
+            if (res == SD_OK) {
+                return RES_OK;
+            }
+        }
+        g_disk_dbg.rd_fail_cnt++;
+        g_disk_dbg.last_is_read = 1U;
+        g_disk_dbg.last_sd_res = res;
+        g_disk_dbg.last_dresult = (uint8_t)RES_ERROR;
+        g_disk_dbg.last_sector = sector;
+        g_disk_dbg.last_count = (DWORD)count;
+        g_disk_dbg.last_hal_error = SDCARD_Handler.ErrorCode;
+        g_disk_dbg.last_sdio_sta = SDIO->STA;
+        g_disk_dbg.last_hal_state = (BYTE)SDCARD_Handler.State;
+    }
+    return dr;
 }
 
 DRESULT disk_write(BYTE pdrv, const BYTE *buff, DWORD sector, UINT count)
 {
     uint8_t res;
+    DRESULT dr;
 
     if (pdrv != SD_CARD || count == 0U) {
+        g_disk_dbg.wr_fail_cnt++;
+        g_disk_dbg.last_is_read = 0U;
+        g_disk_dbg.last_sd_res = 0xFFU;
+        g_disk_dbg.last_dresult = (uint8_t)RES_PARERR;
+        g_disk_dbg.last_sector = sector;
+        g_disk_dbg.last_count = (DWORD)count;
+        g_disk_dbg.last_hal_error = SDCARD_Handler.ErrorCode;
+        g_disk_dbg.last_sdio_sta = SDIO->STA;
+        g_disk_dbg.last_hal_state = (BYTE)SDCARD_Handler.State;
         return RES_PARERR;
     }
     res = SD_WriteDisk((uint8_t *)buff, sector, count);
-    return (res == SD_OK) ? RES_OK : RES_ERROR;
+    if (res == SD_OK) {
+        dr = RES_OK;
+    } else {
+        g_disk_dbg.wr_fail_cnt++;
+        g_disk_dbg.last_is_read = 0U;
+        g_disk_dbg.last_sd_res = res;
+        g_disk_dbg.last_dresult = (uint8_t)RES_ERROR;
+        g_disk_dbg.last_sector = sector;
+        g_disk_dbg.last_count = (DWORD)count;
+        g_disk_dbg.last_hal_error = SDCARD_Handler.ErrorCode;
+        g_disk_dbg.last_sdio_sta = SDIO->STA;
+        g_disk_dbg.last_hal_state = (BYTE)SDCARD_Handler.State;
+        dr = RES_ERROR;
+    }
+    return dr;
 }
 
 DRESULT disk_ioctl(BYTE pdrv, BYTE cmd, void *buff)

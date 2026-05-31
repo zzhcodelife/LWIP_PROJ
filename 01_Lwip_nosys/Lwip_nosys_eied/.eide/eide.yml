@@ -291,6 +291,11 @@ virtualFolder:
         - path: ../Lwip_nosys/Fatfs/fatfs_utils.c
         - path: ../Lwip_nosys/Fatfs/src/option/cc936.c
       folders: []
+    - name: Tftp
+      files:
+        - path: ../Lwip_nosys/Tftp/tftp_fs.c
+        - path: ../Lwip_nosys/Tftp/tftp_fs.h
+      folders: []
 dependenceList: []
 outDir: build
 miscInfo:
@@ -319,6 +324,7 @@ targets:
         - ../Lwip_nosys/Fatfs
         - ../Lwip_nosys/Fatfs/src
         - ../Lwip_nosys/User/sdio
+        - ../Lwip_nosys/Tftp
       libList: []
     excludeList: []
     settings:

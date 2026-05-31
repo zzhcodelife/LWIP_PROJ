@@ -43,6 +43,6 @@ typedef int sys_prot_t;
 #define PACK_STRUCT_END
 #define PACK_STRUCT_FIELD(x) x
 #endif
-#define LWIP_PLATFORM_ASSERT(x) do {printf(x);}while(0)
+#define LWIP_PLATFORM_ASSERT(x) do { (void)(x); } while (0)
 extern u32_t sys_now(void);
 #endif /* __CC_H__ */

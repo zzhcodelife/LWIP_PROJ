@@ -40,13 +40,7 @@ do
 {
 netbuf_data(buf, &data, &len); 
 err= netconn_write(newconn, data, len, NETCONN_COPY); 
-#if 0
-if (err != ERR_OK)
-{
-printf("tcpecho: netconn_write: error \"%s\"\n",
-lwip_strerr(err));
-}
-#endif
+(void)err;
 }
 while (netbuf_next(buf) >= 0); 
 netbuf_delete(buf); 

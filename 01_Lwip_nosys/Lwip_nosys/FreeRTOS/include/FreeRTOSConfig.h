@@ -78,7 +78,7 @@
 #endif
 
 //断言
-#define vAssertCalled(char,int) printf("Error:%s,%d\r\n",char,int)
+#define vAssertCalled(char,int) do { (void)(char); (void)(int); } while (0)
 #define configASSERT(x) if((x)==0) vAssertCalled(__FILE__,__LINE__)
 
 /***************************************************************************************************************/
@@ -116,7 +116,7 @@
 /*                                FreeRTOS与内存申请有关配置选项                                                */
 /***************************************************************************************************************/
 #define configSUPPORT_DYNAMIC_ALLOCATION        1                       //支持动态内存申请
-#define configTOTAL_HEAP_SIZE					((size_t)(40*1024))     //系统所有总的堆大小
+#define configTOTAL_HEAP_SIZE					((size_t)(64*1024))     /* LwIP+TFTP 多任务需更大堆 */
 
 /***************************************************************************************************************/
 /*                                FreeRTOS与钩子函数有关的配置选项                                              */

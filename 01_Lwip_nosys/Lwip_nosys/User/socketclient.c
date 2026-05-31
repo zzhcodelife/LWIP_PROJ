@@ -15,7 +15,6 @@ static void socket_client(void *thread_param)
         sock = socket(AF_INET, SOCK_STREAM, 0);
         if (sock < 0)
         {
-            printf("Socket error\n");
             vTaskDelay(10);
             continue;
         }

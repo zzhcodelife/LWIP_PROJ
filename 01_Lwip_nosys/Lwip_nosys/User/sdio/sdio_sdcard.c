@@ -42,6 +42,19 @@ uint8_t SD_Init(void)
     return 0;
 }
 
+uint8_t SD_Recover(void)
+{
+    (void)HAL_SD_Abort(&SDCARD_Handler);
+    (void)HAL_SD_DeInit(&SDCARD_Handler);
+    SDCARD_Handler.State = HAL_SD_STATE_RESET;
+    if (xTaskGetSchedulerState() == taskSCHEDULER_RUNNING) {
+        vTaskDelay(pdMS_TO_TICKS(50));
+    } else {
+        HAL_Delay(50);
+    }
+    return SD_Init();
+}
+
 void HAL_SD_MspInit(SD_HandleTypeDef *hsd)
 {
     GPIO_InitTypeDef GPIO_Initure;
@@ -115,45 +128,86 @@ uint8_t SD_GetCardInfo(HAL_SD_CardInfoTypeDef *cardinfo)
 
 #if (SD_DMA_MODE == 1)
 
-static uint8_t SD_WaitTransferDone(SD_HandleTypeDef *hsd)
+static void SD_Yield1ms(void)
+{
+    if (xTaskGetSchedulerState() == taskSCHEDULER_RUNNING) {
+        vTaskDelay(pdMS_TO_TICKS(1));
+    } else {
+        HAL_Delay(1);
+    }
+}
+
+/* 上次 DMA 未结束（hsd->State 仍为 BUSY）时不启动新传输 */
+static uint8_t SD_WaitHalReady(SD_HandleTypeDef *hsd)
 {
     uint32_t tickstart = HAL_GetTick();
 
-    while (HAL_SD_GetCardState(hsd) != HAL_SD_CARD_TRANSFER)
+    while (hsd->State != HAL_SD_STATE_READY)
     {
         if ((HAL_GetTick() - tickstart) >= SD_TIMEOUT)
         {
             return 1;
         }
-        vTaskDelay(pdMS_TO_TICKS(1));
+        SD_Yield1ms();
     }
     return 0;
 }
 
+static uint8_t SD_WaitTransferDone(SD_HandleTypeDef *hsd)
+{
+    uint32_t tickstart = HAL_GetTick();
+
+    for (;;)
+    {
+        uint8_t card_ready = (HAL_SD_GetCardState(hsd) == HAL_SD_CARD_TRANSFER) ? 1U : 0U;
+        uint8_t hal_ready = (hsd->State == HAL_SD_STATE_READY) ? 1U : 0U;
+
+        if (card_ready && hal_ready)
+        {
+            return 0;
+        }
+        if ((HAL_GetTick() - tickstart) >= SD_TIMEOUT)
+        {
+            return 1;
+        }
+        SD_Yield1ms();
+    }
+}
+
 uint8_t SD_ReadBlocks_DMA(uint32_t *buf, uint64_t sector, uint32_t blocksize, uint32_t cnt)
 {
-    uint8_t err = 0;
+    uint8_t err;
 
     (void)blocksize;
-    err = (uint8_t)HAL_SD_ReadBlocks_DMA(&SDCARD_Handler, (uint8_t *)buf, (uint32_t)sector, cnt);
-    if (err == 0)
+    err = SD_WaitHalReady(&SDCARD_Handler);
+    if (err != 0U)
     {
-        err = SD_WaitTransferDone(&SDCARD_Handler);
+        return err;
     }
-    return err;
+    err = (uint8_t)HAL_SD_ReadBlocks_DMA(&SDCARD_Handler, (uint8_t *)buf, (uint32_t)sector, cnt);
+    if (err != 0U)
+    {
+        return err;
+    }
+    return SD_WaitTransferDone(&SDCARD_Handler);
 }
 
 uint8_t SD_WriteBlocks_DMA(uint32_t *buf, uint64_t sector, uint32_t blocksize, uint32_t cnt)
 {
-    uint8_t err = 0;
+    uint8_t err;
 
     (void)blocksize;
-    err = (uint8_t)HAL_SD_WriteBlocks_DMA(&SDCARD_Handler, (uint8_t *)buf, (uint32_t)sector, cnt);
-    if (err == 0)
+    err = SD_WaitHalReady(&SDCARD_Handler);
+    if (err != 0U)
     {
-        err = SD_WaitTransferDone(&SDCARD_Handler);
+        return err;
     }
-    return err;
+    err = (uint8_t)HAL_SD_WriteBlocks_DMA(&SDCARD_Handler, (uint8_t *)buf, (uint32_t)sector, cnt);
+    if (err != 0U)
+    {
+        return err;
+    }
+    return SD_WaitTransferDone(&SDCARD_Handler);
 }
 
 uint8_t SD_ReadDisk(uint8_t *buf, uint32_t sector, uint32_t cnt)

@@ -65,6 +65,8 @@ should be set high. */
 /* MEMP_NUM_UDP_PCB: the number of UDP protocol control blocks. One
 per active UDP "connection". */
 #define MEMP_NUM_UDP_PCB 6
+/* Socket API：每开一个 socket 占 1 个 netconn（TFTP 仅需 1 个 UDP socket） */
+#define MEMP_NUM_NETCONN 6
 /* MEMP_NUM_TCP_PCB: the number of simulatenously active TCP
 connections. */
 #define MEMP_NUM_TCP_PCB 10
@@ -76,7 +78,7 @@ segments. */
 #define MEMP_NUM_TCP_SEG 12
 /* MEMP_NUM_SYS_TIMEOUT: the number of simulateously active
 timeouts. */
-#define MEMP_NUM_SYS_TIMEOUT 10
+#define MEMP_NUM_SYS_TIMEOUT 11
 /* ---------- Pbuf options ---------- */
 /* PBUF_POOL_SIZE: the number of buffers in the pbuf pool. */
 #define PBUF_POOL_SIZE 10 
@@ -201,6 +203,7 @@ as much as (2 * TCP_SND_BUF/TCP_MSS) for things to work. */
 ----------------------------------------
 */
 //#define LWIP_DEBUG 1
+
 #endif /* __LWIPOPTS_H__ */
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
 

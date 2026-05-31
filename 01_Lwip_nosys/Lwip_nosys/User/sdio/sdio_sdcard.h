@@ -18,6 +18,7 @@ extern SD_HandleTypeDef       SDCARD_Handler;
 extern HAL_SD_CardInfoTypeDef SDCardInfo;
 
 uint8_t SD_Init(void);
+uint8_t SD_Recover(void);   /* DeInit + ÷ÿ–¬ Init£¨∂¡ ß∞‹ ±≤π∂°ª÷∏¥ */
 uint8_t SD_GetCardInfo(HAL_SD_CardInfoTypeDef *cardinfo);
 uint8_t SD_ReadDisk(uint8_t *buf, uint32_t sector, uint32_t cnt);
 uint8_t SD_WriteDisk(uint8_t *buf, uint32_t sector, uint32_t cnt);

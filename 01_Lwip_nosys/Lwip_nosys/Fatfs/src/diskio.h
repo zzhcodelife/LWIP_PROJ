@@ -35,6 +35,22 @@ DRESULT disk_read (BYTE pdrv, BYTE* buff, DWORD sector, UINT count);
 DRESULT disk_write (BYTE pdrv, const BYTE* buff, DWORD sector, UINT count);
 DRESULT disk_ioctl (BYTE pdrv, BYTE cmd, void* buff);
 
+/* disk_read / disk_write 失败时断点停住后查看（无 printf） */
+typedef struct {
+    volatile DWORD rd_fail_cnt;        /* 读失败累计次数 */
+    volatile DWORD wr_fail_cnt;        /* 写失败累计次数 */
+    volatile BYTE  last_sd_res;        /* SD_ReadDisk/SD_WriteDisk 返回值，0=SD_OK */
+    volatile BYTE  last_dresult;       /* 返回给 FatFs 的 DRESULT */
+    volatile DWORD last_sector;        /* 失败时扇区号 */
+    volatile DWORD last_count;         /* 失败时扇区个数 */
+    volatile DWORD last_hal_error;     /* SDCARD_Handler.ErrorCode */
+    volatile DWORD last_sdio_sta;      /* SDIO->STA */
+    volatile BYTE  last_is_read;       /* 1=读失败 0=写失败 */
+    volatile BYTE  last_hal_state;    /* 失败时 SDCARD_Handler.State */
+} Disk_Dbg_t;
+
+extern volatile Disk_Dbg_t g_disk_dbg;
+
 
 /* Disk Status Bits (DSTATUS) */
 

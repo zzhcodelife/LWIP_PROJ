@@ -166,7 +166,6 @@ sys_sem_new(sys_sem_t *sem, u8_t count)
 #if SYS_STATS
     ++lwip_stats.sys.sem.err;
 #endif /* SYS_STATS */
-    printf("[sys_arch]:new sem fail!\n");
     return ERR_MEM;
   }
 }
@@ -235,8 +234,7 @@ sys_arch_sem_wait(sys_sem_t *sem, u32_t timeout)
 void
 sys_sem_signal(sys_sem_t *sem)
 {
-  if(xSemaphoreGive( *sem ) != pdTRUE)
-    printf("[sys_arch]:sem signal fail!\n");
+  (void)xSemaphoreGive(*sem);
 }
 
 err_t
@@ -248,7 +246,6 @@ sys_mutex_new(sys_mutex_t *mutex)
     return ERR_OK;
   else
   {
-    printf("[sys_arch]:new mutex fail!\n");
     return ERR_MEM;
   }
 }
@@ -291,9 +288,7 @@ sys_thread_new(const char *name, lwip_thread_fn function, void *arg, int stacksi
                         (void*          )arg,/* 任务入口函数参数 */
                         (UBaseType_t    )prio, /* 任务的优先级 */
                         (TaskHandle_t*  )&handle);/* 任务控制块指针 */ 
-  if(xReturn != pdPASS)
-  {
-    printf("[sys_arch]:create task fail!err:%#lx\n",xReturn);
+  if (xReturn != pdPASS) {
     return NULL;
   }
   return handle;
@@ -473,29 +468,11 @@ void TCPIP_Init(void)
     netif_set_down(&gnetif);
   }
   
-#if LWIP_DHCP	   			//若使用了DHCP
-  int err;
-  /*  Creates a new DHCP client for this interface on the first call.
-  Note: you must call dhcp_fine_tmr() and dhcp_coarse_tmr() at
-  the predefined regular intervals after starting the client.
-  You can peek in the netif->dhcp struct for the actual DHCP status.*/
-  
-  printf("本例程将使用DHCP动态分配IP地址,如果不需要则在lwipopts.h中将LWIP_DHCP定义为0\n\n");
-  
-  err = dhcp_start(&gnetif);      //开启dhcp
-  if(err == ERR_OK)
-    printf("lwip dhcp init success...\n\n");
-  else
-    printf("lwip dhcp init fail...\n\n");
-  while(ip_addr_cmp(&(gnetif.ip_addr),&ipaddr))   //等待dhcp分配的ip有效
-  {
+#if LWIP_DHCP
+  (void)dhcp_start(&gnetif);
+  while (ip_addr_cmp(&(gnetif.ip_addr), &ipaddr)) {
     vTaskDelay(1);
-  } 
+  }
 #endif
-  printf("本地IP地址是:%d.%d.%d.%d\n\n",  \
-        ((gnetif.ip_addr.addr)&0x000000ff),       \
-        (((gnetif.ip_addr.addr)&0x0000ff00)>>8),  \
-        (((gnetif.ip_addr.addr)&0x00ff0000)>>16), \
-        ((gnetif.ip_addr.addr)&0xff000000)>>24);
 }
 
