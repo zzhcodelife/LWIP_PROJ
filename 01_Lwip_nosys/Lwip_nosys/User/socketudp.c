@@ -175,6 +175,17 @@ static void resend_last(int sock)
     }
 }
 
+static int is_rrq_or_wrq(const uint8_t *buf, int len)
+{
+    uint16_t op;
+
+    if (len < 2) {
+        return 0;
+    }
+    op = (uint16_t)(((uint16_t)buf[0] << 8) | buf[1]);
+    return (op == TFTP_RRQ || op == TFTP_WRQ) ? 1 : 0;
+}
+
 static int parse_request(const uint8_t *buf, int len, char *fname, size_t fname_sz,
                        char *mode, size_t mode_sz, uint16_t *opcode)
 {
@@ -392,8 +403,7 @@ static void handle_request(int sock, const uint8_t *buf, int len,
     uint16_t opcode;
 
     if (s_sess.state != SESS_IDLE) {
-        send_error(sock, TFTP_ERR_ILLEGAL_OP, "busy");
-        return;
+        sess_reset();
     }
 
     if (!parse_request(buf, len, fname, sizeof(fname), mode, sizeof(mode), &opcode)) {
@@ -444,9 +454,15 @@ static void handle_datagram(int sock, const uint8_t *buf, int len)
         return;
     }
 
-    /* 上次会话未结束又收到 RRQ/WRQ：须回包，否则 PC 报「连接请求失败」 */
+    /* 同类型重复 RRQ/WRQ（Windows 常连发）：忽略，勿 reset 打断正在传的块 */
     if (opcode == TFTP_RRQ || opcode == TFTP_WRQ) {
-        send_error(sock, TFTP_ERR_ILLEGAL_OP, "busy");
+        if ((opcode == TFTP_RRQ && s_sess.state == SESS_READ) ||
+            (opcode == TFTP_WRQ && s_sess.state == SESS_WRITE)) {
+            return;
+        }
+        /* GET↔PUT 切换或异常残留：结束旧会话再开新请求 */
+        sess_reset();
+        handle_request(sock, buf, len, &s_sess.peer, s_sess.peer_len);
         return;
     }
 
@@ -550,7 +566,7 @@ static void socketudp_thread(void *arg)
 
         g_tftp_dbg.recv_ok++;   /* 断点：UDP 已到应用层；>0 才可能有 handle_request */
 
-        if (s_sess.state == SESS_IDLE) {
+        if (s_sess.state == SESS_IDLE || is_rrq_or_wrq(buf, recv_len)) {
             memcpy(&s_sess.peer, &from, sizeof(from));
             s_sess.peer_len = from_len;
         }
