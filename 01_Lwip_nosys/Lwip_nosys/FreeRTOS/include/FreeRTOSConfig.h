@@ -127,11 +127,17 @@
 /***************************************************************************************************************/
 /*                                FreeRTOS与运行时间和任务状态收集有关的配置选项                                 */
 /***************************************************************************************************************/
-#define configGENERATE_RUN_TIME_STATS	        0                       //为1时启用运行时间统计功能
+#define configGENERATE_RUN_TIME_STATS	        1                       // mon_cpu：Idle 差分 CPU 统计
 #define configUSE_TRACE_FACILITY				1                       //为1启用可视化跟踪调试
 #define configUSE_STATS_FORMATTING_FUNCTIONS	1                       //与宏configUSE_TRACE_FACILITY同时为1时会编译下面3个函数
                                                                         //prvWriteNameToBuffer(),vTaskList(),
                                                                         //vTaskGetRunTimeStats()
+
+#include <stdint.h>
+extern void configureTimerForRunTimeStats(void);
+extern uint32_t getRunTimeCounterValue(void);
+#define portCONFIGURE_TIMER_FOR_RUN_TIME_STATS()  configureTimerForRunTimeStats()
+#define portGET_RUN_TIME_COUNTER_VALUE()          getRunTimeCounterValue()
                                                                         
 /***************************************************************************************************************/
 /*                                FreeRTOS与协程有关的配置选项                                                  */
@@ -159,6 +165,7 @@
 #define INCLUDE_vTaskDelayUntil			        1
 #define INCLUDE_vTaskDelay				        1
 #define INCLUDE_eTaskGetState			        1
+#define INCLUDE_xTaskGetIdleTaskHandle          1
 #define INCLUDE_xTimerPendFunctionCall	        1
 
 /***************************************************************************************************************/
