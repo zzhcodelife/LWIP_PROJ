@@ -12,7 +12,8 @@
 #include "queue.h"
 
 #define TFTP_FS_STACK_WORDS  1536U
-#define TFTP_FS_TASK_PRIO    5U
+/* 最慢路径（SD/FatFs），低于网络应用线程 */
+#define TFTP_FS_TASK_PRIO    2U
 #define TFTP_FS_RPC_TIMEOUT      pdMS_TO_TICKS(35000) /* 与 SD_TIMEOUT 同量级 */
 #define TFTP_FS_WRITE_RETRY_MAX  3U
 #define TFTP_FS_WRITE_RETRY_MS   20U

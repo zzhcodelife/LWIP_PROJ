@@ -59,10 +59,11 @@
   #define NETIF_MTU								      ( 1500 )
 
   #define NETIF_IN_TASK_STACK_SIZE			( 1024 )
-  #define NETIF_IN_TASK_PRIORITY			  ( 3 )
+  /* 收包应高于 tcpip：尽快抽干 DMA/驱动，再交给 lwip 处理 */
+  #define NETIF_IN_TASK_PRIORITY			  ( 5 )
 
   #define NETIF_OUT_TASK_STACK_SIZE			( 1024 )
-  #define NETIF_OUT_TASK_PRIORITY			  ( 3 )
+  #define NETIF_OUT_TASK_PRIORITY			  ( 4 )
 
 
 /* Exported functions ------------------------------------------------------- */

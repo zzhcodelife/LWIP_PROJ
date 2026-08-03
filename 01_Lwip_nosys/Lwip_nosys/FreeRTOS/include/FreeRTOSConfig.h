@@ -148,10 +148,10 @@ extern uint32_t getRunTimeCounterValue(void);
 /***************************************************************************************************************/
 /*                                FreeRTOS与软件定时器有关的配置选项                                            */
 /***************************************************************************************************************/
-#define configUSE_TIMERS				        1                               //为1时启用软件定时器
-#define configTIMER_TASK_PRIORITY		        (configMAX_PRIORITIES-1)        //软件定时器优先级
-#define configTIMER_QUEUE_LENGTH		        5                               //软件定时器队列长度
-#define configTIMER_TASK_STACK_DEPTH	        (configMINIMAL_STACK_SIZE*2)    //软件定时器任务堆栈大小
+#define configUSE_TIMERS				        0                               //当前工程未使用软件定时器，关闭以免创建 Tmr Svc
+#define configTIMER_TASK_PRIORITY		        6                               // 预留；configUSE_TIMERS=1 时再生效
+#define configTIMER_QUEUE_LENGTH		        5
+#define configTIMER_TASK_STACK_DEPTH	        (configMINIMAL_STACK_SIZE*2)
 
 /***************************************************************************************************************/
 /*                                FreeRTOS可选函数配置选项                                                      */
@@ -166,7 +166,7 @@ extern uint32_t getRunTimeCounterValue(void);
 #define INCLUDE_vTaskDelay				        1
 #define INCLUDE_eTaskGetState			        1
 #define INCLUDE_xTaskGetIdleTaskHandle          1
-#define INCLUDE_xTimerPendFunctionCall	        1
+#define INCLUDE_xTimerPendFunctionCall	        0                               // 依赖软件定时器，已关闭
 
 /***************************************************************************************************************/
 /*                                FreeRTOS与中断有关的配置选项                                                  */

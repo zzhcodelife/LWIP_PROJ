@@ -30,7 +30,8 @@ typedef struct __attribute__((packed)) {
 } tftp_hdr_t;
 #define TFTP_SOCK_TIMEOUT_SEC  5
 #define TFTP_NET_STACK_WORDS   1536U
-#define TFTP_NET_TASK_PRIO     5U
+/* 低于 ETHIN/lwip，避免 TFTP 协议处理饿死收包与协议栈 */
+#define TFTP_NET_TASK_PRIO     3U
 #define TFTP_SOCK_ERR_OK       1U
 #define TFTP_SOCK_ERR_TASK     2U
 #define TFTP_SOCK_ERR_SOCKET   3U

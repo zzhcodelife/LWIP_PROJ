@@ -196,7 +196,8 @@ as much as (2 * TCP_SND_BUF/TCP_MSS) for things to work. */
 #define TCPIP_THREAD_NAME              "lwip"
 #define TCPIP_THREAD_STACKSIZE          2048
 #define TCPIP_MBOX_SIZE                 8
-#define TCPIP_THREAD_PRIO               3
+/* ETHIN(5) > lwip(4) > socketudp(3) > tftp_fs(2) > IDLE(0) */
+#define TCPIP_THREAD_PRIO               4
 /*
 ----------------------------------------
 ---------- Lwip Debug options ----------
